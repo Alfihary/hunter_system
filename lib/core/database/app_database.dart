@@ -8,45 +8,23 @@ part 'app_database.g.dart';
 /// TABLAS DE HÁBITOS
 /// ==============================
 
-/// Tabla principal de hábitos.
-///
-/// Guarda la definición base del hábito.
 class Habits extends Table {
-  /// ID único del hábito.
   TextColumn get id => text()();
-
-  /// Nombre visible del hábito.
   TextColumn get name => text().withLength(min: 2, max: 60)();
-
-  /// Categoría guardada como texto.
   TextColumn get category => text()();
-
-  /// XP otorgado al completar el hábito.
   IntColumn get xpReward => integer().withDefault(const Constant(10))();
-
-  /// Si el hábito sigue activo.
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
-
-  /// Fecha de creación.
   DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Historial diario de cumplimiento de hábitos.
 class HabitLogs extends Table {
-  /// ID único del log.
   TextColumn get id => text()();
-
-  /// Relación con el hábito.
   TextColumn get habitId =>
       text().references(Habits, #id, onDelete: KeyAction.cascade)();
-
-  /// Fecha simplificada, ejemplo: 2026-04-20
   TextColumn get dateKey => text()();
-
-  /// Fecha/hora exacta del registro.
   DateTimeColumn get completedAt => dateTime()();
 
   @override
@@ -57,135 +35,112 @@ class HabitLogs extends Table {
 /// TABLAS DE ENTRENAMIENTO
 /// ==============================
 
-/// Rutinas base de entrenamiento.
-///
-/// Sirven como plantillas reutilizables.
 class WorkoutRoutines extends Table {
-  /// ID único de la rutina.
   TextColumn get id => text()();
-
-  /// Nombre visible.
   TextColumn get name => text().withLength(min: 2, max: 80)();
-
-  /// Descripción opcional.
   TextColumn get description => text().nullable()();
-
-  /// Indica si la rutina sigue activa.
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
-
-  /// Fecha de creación.
   DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Ejercicios pertenecientes a una rutina.
-///
-/// Ahora incluye `targetSets` para mostrar en sesión:
-/// - 0/4 series
-/// - 1/4 series
-/// - 4/4 series
 class RoutineExercises extends Table {
-  /// ID único del ejercicio dentro de la rutina.
   TextColumn get id => text()();
 
-  /// Relación con la rutina.
   TextColumn get routineId =>
       text().references(WorkoutRoutines, #id, onDelete: KeyAction.cascade)();
 
-  /// Nombre del ejercicio.
   TextColumn get name => text().withLength(min: 2, max: 80)();
-
-  /// Grupo muscular guardado como texto.
   TextColumn get muscleGroup => text()();
-
-  /// Orden visual del ejercicio dentro de la rutina.
   IntColumn get sortOrder => integer()();
-
-  /// Meta de series planeadas para el ejercicio.
   IntColumn get targetSets => integer().withDefault(const Constant(3))();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Sesión real de entrenamiento.
-///
-/// Se crea cuando el usuario empieza a entrenar.
 class Workouts extends Table {
-  /// ID único de la sesión.
   TextColumn get id => text()();
 
-  /// Rutina de origen.
   TextColumn get routineId =>
       text().references(WorkoutRoutines, #id, onDelete: KeyAction.cascade)();
 
-  /// Inicio de la sesión.
   DateTimeColumn get startedAt => dateTime()();
-
-  /// Fin de la sesión.
   DateTimeColumn get endedAt => dateTime().nullable()();
-
-  /// Notas opcionales.
   TextColumn get notes => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Sets ejecutados dentro de una sesión.
-///
-/// Soporta:
-/// - normal
-/// - dropSet
-/// - isometric
 class WorkoutSets extends Table {
-  /// ID único del set.
   TextColumn get id => text()();
 
-  /// Relación con la sesión.
   TextColumn get workoutId =>
       text().references(Workouts, #id, onDelete: KeyAction.cascade)();
 
-  /// Nombre del ejercicio al momento de guardar.
   TextColumn get exerciseNameSnapshot => text()();
-
-  /// Grupo muscular al momento de guardar.
   TextColumn get muscleGroupSnapshot => text()();
-
-  /// Repeticiones.
-  ///
-  /// Nulo en sets isométricos.
   IntColumn get reps => integer().nullable()();
-
-  /// Duración en segundos.
-  ///
-  /// Se usa sólo para isométricos.
   IntColumn get durationSeconds => integer().nullable()();
-
-  /// Peso opcional.
   RealColumn get weight => real().nullable()();
-
-  /// Tipo de set:
-  /// - normal
-  /// - dropSet
-  /// - isometric
   TextColumn get setType => text().withDefault(const Constant('normal'))();
-
-  /// Orden del set dentro de la sesión.
   IntColumn get setOrder => integer()();
-
-  /// Fecha/hora de creación.
   DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-/// Base de datos principal de la app.
+/// ==============================
+/// TABLAS DE NUTRICIÓN
+/// ==============================
+
+/// Metas globales de nutrición.
 ///
-/// Centraliza todas las tablas y define las migraciones.
+/// ¿Qué hace?
+/// Guarda una sola fila con las metas nutricionales del usuario.
+///
+/// ¿Para qué sirve?
+/// Para tener objetivos diarios reutilizables en el resumen de nutrición.
+class NutritionGoals extends Table {
+  IntColumn get id => integer()();
+  RealColumn get caloriesGoal => real()();
+  RealColumn get proteinGoal => real()();
+  RealColumn get carbsGoal => real()();
+  RealColumn get fatsGoal => real()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Registros individuales de alimentos o comidas.
+///
+/// ¿Qué hace?
+/// Guarda el snapshot nutricional de cada alimento registrado.
+///
+/// ¿Para qué sirve?
+/// Para el historial diario y, más adelante,
+/// para conectar el RPG a la alimentación real.
+class NutritionLogs extends Table {
+  TextColumn get id => text()();
+  TextColumn get foodName => text().withLength(min: 1, max: 120)();
+  TextColumn get mealType => text()();
+  TextColumn get sourceType => text().withDefault(const Constant('manual'))();
+  TextColumn get servingDescription => text().nullable()();
+  TextColumn get externalId => text().nullable()();
+  RealColumn get calories => real().withDefault(const Constant(0))();
+  RealColumn get protein => real().withDefault(const Constant(0))();
+  RealColumn get carbs => real().withDefault(const Constant(0))();
+  RealColumn get fats => real().withDefault(const Constant(0))();
+  DateTimeColumn get loggedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Habits,
@@ -194,28 +149,27 @@ class WorkoutSets extends Table {
     RoutineExercises,
     Workouts,
     WorkoutSets,
+    NutritionGoals,
+    NutritionLogs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
-  /// Versión actual del esquema.
-  ///
-  /// v1 = hábitos
-  /// v2 = entrenamiento base
-  /// v3 = cambio de estructura en workout_sets
-  /// v4 = targetSets en routine_exercises
+  /// Subimos a 5 porque agregamos tablas de nutrición.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
-  /// Estrategia de migración.
-  ///
-  /// En esta etapa de desarrollo preferimos migraciones simples y seguras
-  /// para evitar conflictos con archivos generados viejos.
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+
+      await customStatement('''
+            INSERT OR IGNORE INTO nutrition_goals
+            (id, calories_goal, protein_goal, carbs_goal, fats_goal)
+            VALUES (1, 2200, 160, 200, 70)
+          ''');
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) {
@@ -226,16 +180,23 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 3) {
-        /// Recreamos workout_sets porque cambió su estructura.
         await m.deleteTable('workout_sets');
         await m.createTable(workoutSets);
       }
 
       if (from < 4) {
-        /// En desarrollo es más simple recrear esta tabla
-        /// que pelear con addColumn + código generado viejo.
-        await m.deleteTable('routine_exercises');
-        await m.createTable(routineExercises);
+        await m.addColumn(routineExercises, routineExercises.targetSets);
+      }
+
+      if (from < 5) {
+        await m.createTable(nutritionGoals);
+        await m.createTable(nutritionLogs);
+
+        await customStatement('''
+              INSERT OR IGNORE INTO nutrition_goals
+              (id, calories_goal, protein_goal, carbs_goal, fats_goal)
+              VALUES (1, 2200, 160, 200, 70)
+            ''');
       }
     },
     beforeOpen: (details) async {

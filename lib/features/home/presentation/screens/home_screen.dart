@@ -77,18 +77,20 @@ class HomeScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.fitness_center),
               title: const Text('Entrenamiento'),
-              subtitle: const Text(
-                'Rutinas, sesiones reales y sets',
-              ),
+              subtitle: const Text('Rutinas, sesiones reales e historial'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/workouts'),
             ),
           ),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.restaurant_outlined),
-              title: Text('Nutrición'),
-              subtitle: Text('Siguiente fase'),
+              leading: const Icon(Icons.restaurant_outlined),
+              title: const Text('Nutrición'),
+              subtitle: const Text(
+                'Metas diarias, alimentos y resumen del día',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/nutrition'),
             ),
           ),
           const Card(

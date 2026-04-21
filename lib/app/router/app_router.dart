@@ -9,6 +9,11 @@ import '../../features/habits/presentation/screens/habit_form_screen.dart';
 import '../../features/habits/presentation/screens/habit_history_screen.dart';
 import '../../features/habits/presentation/screens/habits_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/nutrition/domain/nutrition_search_result.dart';
+import '../../features/nutrition/presentation/screens/nutrition_barcode_scanner_screen.dart';
+import '../../features/nutrition/presentation/screens/nutrition_log_form_screen.dart';
+import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
+import '../../features/nutrition/presentation/screens/nutrition_search_screen.dart';
 import '../../features/workout/presentation/screens/routine_form_screen.dart';
 import '../../features/workout/presentation/screens/workout_history_detail_screen.dart';
 import '../../features/workout/presentation/screens/workout_history_screen.dart';
@@ -62,6 +67,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/workouts/history/:workoutId',
         builder: (context, state) => WorkoutHistoryDetailScreen(
           workoutId: state.pathParameters['workoutId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/nutrition',
+        builder: (context, state) => const NutritionScreen(),
+      ),
+      GoRoute(
+        path: '/nutrition/search',
+        builder: (context, state) => const NutritionSearchScreen(),
+      ),
+      GoRoute(
+        path: '/nutrition/barcode',
+        builder: (context, state) => const NutritionBarcodeScannerScreen(),
+      ),
+      GoRoute(
+        path: '/nutrition/log',
+        builder: (context, state) => NutritionLogFormScreen(
+          initialSearchResult: state.extra as NutritionSearchResult?,
         ),
       ),
     ],
