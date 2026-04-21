@@ -3539,6 +3539,221 @@ class NutritionLogsCompanion extends UpdateCompanion<NutritionLog> {
   }
 }
 
+class $RpgProfileSettingsTable extends RpgProfileSettings
+    with TableInfo<$RpgProfileSettingsTable, RpgProfileSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RpgProfileSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _equippedTitleIdMeta = const VerificationMeta(
+    'equippedTitleId',
+  );
+  @override
+  late final GeneratedColumn<String> equippedTitleId = GeneratedColumn<String>(
+    'equipped_title_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, equippedTitleId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rpg_profile_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RpgProfileSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('equipped_title_id')) {
+      context.handle(
+        _equippedTitleIdMeta,
+        equippedTitleId.isAcceptableOrUnknown(
+          data['equipped_title_id']!,
+          _equippedTitleIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RpgProfileSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RpgProfileSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      equippedTitleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}equipped_title_id'],
+      ),
+    );
+  }
+
+  @override
+  $RpgProfileSettingsTable createAlias(String alias) {
+    return $RpgProfileSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class RpgProfileSetting extends DataClass
+    implements Insertable<RpgProfileSetting> {
+  final int id;
+
+  /// ID del título actualmente equipado.
+  ///
+  /// Puede ser nulo si el usuario aún no equipa ninguno.
+  final String? equippedTitleId;
+  const RpgProfileSetting({required this.id, this.equippedTitleId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || equippedTitleId != null) {
+      map['equipped_title_id'] = Variable<String>(equippedTitleId);
+    }
+    return map;
+  }
+
+  RpgProfileSettingsCompanion toCompanion(bool nullToAbsent) {
+    return RpgProfileSettingsCompanion(
+      id: Value(id),
+      equippedTitleId: equippedTitleId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(equippedTitleId),
+    );
+  }
+
+  factory RpgProfileSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RpgProfileSetting(
+      id: serializer.fromJson<int>(json['id']),
+      equippedTitleId: serializer.fromJson<String?>(json['equippedTitleId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'equippedTitleId': serializer.toJson<String?>(equippedTitleId),
+    };
+  }
+
+  RpgProfileSetting copyWith({
+    int? id,
+    Value<String?> equippedTitleId = const Value.absent(),
+  }) => RpgProfileSetting(
+    id: id ?? this.id,
+    equippedTitleId: equippedTitleId.present
+        ? equippedTitleId.value
+        : this.equippedTitleId,
+  );
+  RpgProfileSetting copyWithCompanion(RpgProfileSettingsCompanion data) {
+    return RpgProfileSetting(
+      id: data.id.present ? data.id.value : this.id,
+      equippedTitleId: data.equippedTitleId.present
+          ? data.equippedTitleId.value
+          : this.equippedTitleId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RpgProfileSetting(')
+          ..write('id: $id, ')
+          ..write('equippedTitleId: $equippedTitleId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, equippedTitleId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RpgProfileSetting &&
+          other.id == this.id &&
+          other.equippedTitleId == this.equippedTitleId);
+}
+
+class RpgProfileSettingsCompanion extends UpdateCompanion<RpgProfileSetting> {
+  final Value<int> id;
+  final Value<String?> equippedTitleId;
+  const RpgProfileSettingsCompanion({
+    this.id = const Value.absent(),
+    this.equippedTitleId = const Value.absent(),
+  });
+  RpgProfileSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.equippedTitleId = const Value.absent(),
+  });
+  static Insertable<RpgProfileSetting> custom({
+    Expression<int>? id,
+    Expression<String>? equippedTitleId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (equippedTitleId != null) 'equipped_title_id': equippedTitleId,
+    });
+  }
+
+  RpgProfileSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String?>? equippedTitleId,
+  }) {
+    return RpgProfileSettingsCompanion(
+      id: id ?? this.id,
+      equippedTitleId: equippedTitleId ?? this.equippedTitleId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (equippedTitleId.present) {
+      map['equipped_title_id'] = Variable<String>(equippedTitleId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RpgProfileSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('equippedTitleId: $equippedTitleId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3554,6 +3769,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WorkoutSetsTable workoutSets = $WorkoutSetsTable(this);
   late final $NutritionGoalsTable nutritionGoals = $NutritionGoalsTable(this);
   late final $NutritionLogsTable nutritionLogs = $NutritionLogsTable(this);
+  late final $RpgProfileSettingsTable rpgProfileSettings =
+      $RpgProfileSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3567,6 +3784,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workoutSets,
     nutritionGoals,
     nutritionLogs,
+    rpgProfileSettings,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6332,6 +6550,158 @@ typedef $$NutritionLogsTableProcessedTableManager =
       NutritionLog,
       PrefetchHooks Function()
     >;
+typedef $$RpgProfileSettingsTableCreateCompanionBuilder =
+    RpgProfileSettingsCompanion Function({
+      Value<int> id,
+      Value<String?> equippedTitleId,
+    });
+typedef $$RpgProfileSettingsTableUpdateCompanionBuilder =
+    RpgProfileSettingsCompanion Function({
+      Value<int> id,
+      Value<String?> equippedTitleId,
+    });
+
+class $$RpgProfileSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $RpgProfileSettingsTable> {
+  $$RpgProfileSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get equippedTitleId => $composableBuilder(
+    column: $table.equippedTitleId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RpgProfileSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RpgProfileSettingsTable> {
+  $$RpgProfileSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get equippedTitleId => $composableBuilder(
+    column: $table.equippedTitleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RpgProfileSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RpgProfileSettingsTable> {
+  $$RpgProfileSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get equippedTitleId => $composableBuilder(
+    column: $table.equippedTitleId,
+    builder: (column) => column,
+  );
+}
+
+class $$RpgProfileSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RpgProfileSettingsTable,
+          RpgProfileSetting,
+          $$RpgProfileSettingsTableFilterComposer,
+          $$RpgProfileSettingsTableOrderingComposer,
+          $$RpgProfileSettingsTableAnnotationComposer,
+          $$RpgProfileSettingsTableCreateCompanionBuilder,
+          $$RpgProfileSettingsTableUpdateCompanionBuilder,
+          (
+            RpgProfileSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $RpgProfileSettingsTable,
+              RpgProfileSetting
+            >,
+          ),
+          RpgProfileSetting,
+          PrefetchHooks Function()
+        > {
+  $$RpgProfileSettingsTableTableManager(
+    _$AppDatabase db,
+    $RpgProfileSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RpgProfileSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RpgProfileSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RpgProfileSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> equippedTitleId = const Value.absent(),
+              }) => RpgProfileSettingsCompanion(
+                id: id,
+                equippedTitleId: equippedTitleId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> equippedTitleId = const Value.absent(),
+              }) => RpgProfileSettingsCompanion.insert(
+                id: id,
+                equippedTitleId: equippedTitleId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RpgProfileSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RpgProfileSettingsTable,
+      RpgProfileSetting,
+      $$RpgProfileSettingsTableFilterComposer,
+      $$RpgProfileSettingsTableOrderingComposer,
+      $$RpgProfileSettingsTableAnnotationComposer,
+      $$RpgProfileSettingsTableCreateCompanionBuilder,
+      $$RpgProfileSettingsTableUpdateCompanionBuilder,
+      (
+        RpgProfileSetting,
+        BaseReferences<
+          _$AppDatabase,
+          $RpgProfileSettingsTable,
+          RpgProfileSetting
+        >,
+      ),
+      RpgProfileSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6352,4 +6722,6 @@ class $AppDatabaseManager {
       $$NutritionGoalsTableTableManager(_db, _db.nutritionGoals);
   $$NutritionLogsTableTableManager get nutritionLogs =>
       $$NutritionLogsTableTableManager(_db, _db.nutritionLogs);
+  $$RpgProfileSettingsTableTableManager get rpgProfileSettings =>
+      $$RpgProfileSettingsTableTableManager(_db, _db.rpgProfileSettings);
 }

@@ -98,13 +98,6 @@ class WorkoutSets extends Table {
 /// TABLAS DE NUTRICIÓN
 /// ==============================
 
-/// Metas globales de nutrición.
-///
-/// ¿Qué hace?
-/// Guarda una sola fila con las metas nutricionales del usuario.
-///
-/// ¿Para qué sirve?
-/// Para tener objetivos diarios reutilizables en el resumen de nutrición.
 class NutritionGoals extends Table {
   IntColumn get id => integer()();
   RealColumn get caloriesGoal => real()();
@@ -116,14 +109,6 @@ class NutritionGoals extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Registros individuales de alimentos o comidas.
-///
-/// ¿Qué hace?
-/// Guarda el snapshot nutricional de cada alimento registrado.
-///
-/// ¿Para qué sirve?
-/// Para el historial diario y, más adelante,
-/// para conectar el RPG a la alimentación real.
 class NutritionLogs extends Table {
   TextColumn get id => text()();
   TextColumn get foodName => text().withLength(min: 1, max: 120)();
@@ -141,6 +126,29 @@ class NutritionLogs extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// ==============================
+/// TABLAS RPG
+/// ==============================
+
+/// Configuración persistente del módulo RPG.
+///
+/// ¿Qué hace?
+/// Guarda preferencias del personaje relacionadas con el RPG.
+///
+/// ¿Para qué sirve?
+/// En esta fase se usa para almacenar el título equipado.
+class RpgProfileSettings extends Table {
+  IntColumn get id => integer()();
+
+  /// ID del título actualmente equipado.
+  ///
+  /// Puede ser nulo si el usuario aún no equipa ninguno.
+  TextColumn get equippedTitleId => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Habits,
@@ -151,14 +159,15 @@ class NutritionLogs extends Table {
     WorkoutSets,
     NutritionGoals,
     NutritionLogs,
+    RpgProfileSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
-  /// Subimos a 5 porque agregamos tablas de nutrición.
+  /// Subimos a 6 porque agregamos configuración RPG persistente.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -169,6 +178,12 @@ class AppDatabase extends _$AppDatabase {
             INSERT OR IGNORE INTO nutrition_goals
             (id, calories_goal, protein_goal, carbs_goal, fats_goal)
             VALUES (1, 2200, 160, 200, 70)
+          ''');
+
+      await customStatement('''
+            INSERT OR IGNORE INTO rpg_profile_settings
+            (id, equipped_title_id)
+            VALUES (1, NULL)
           ''');
     },
     onUpgrade: (m, from, to) async {
@@ -196,6 +211,16 @@ class AppDatabase extends _$AppDatabase {
               INSERT OR IGNORE INTO nutrition_goals
               (id, calories_goal, protein_goal, carbs_goal, fats_goal)
               VALUES (1, 2200, 160, 200, 70)
+            ''');
+      }
+
+      if (from < 6) {
+        await m.createTable(rpgProfileSettings);
+
+        await customStatement('''
+              INSERT OR IGNORE INTO rpg_profile_settings
+              (id, equipped_title_id)
+              VALUES (1, NULL)
             ''');
       }
     },

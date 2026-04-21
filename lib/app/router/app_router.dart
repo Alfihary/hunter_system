@@ -14,6 +14,9 @@ import '../../features/nutrition/presentation/screens/nutrition_barcode_scanner_
 import '../../features/nutrition/presentation/screens/nutrition_log_form_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_search_screen.dart';
+import '../../features/rpg/presentation/screens/rpg_achievements_screen.dart';
+import '../../features/rpg/presentation/screens/rpg_overview_screen.dart';
+import '../../features/rpg/presentation/screens/rpg_titles_screen.dart';
 import '../../features/workout/presentation/screens/routine_form_screen.dart';
 import '../../features/workout/presentation/screens/workout_history_detail_screen.dart';
 import '../../features/workout/presentation/screens/workout_history_screen.dart';
@@ -86,6 +89,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => NutritionLogFormScreen(
           initialSearchResult: state.extra as NutritionSearchResult?,
         ),
+      ),
+      GoRoute(
+        path: '/rpg',
+        builder: (context, state) => const RpgOverviewScreen(),
+      ),
+      GoRoute(
+        path: '/rpg/achievements',
+        builder: (context, state) => const RpgAchievementsScreen(),
+      ),
+      GoRoute(
+        path: '/rpg/titles',
+        builder: (context, state) => const RpgTitlesScreen(),
       ),
     ],
     redirect: (context, state) {

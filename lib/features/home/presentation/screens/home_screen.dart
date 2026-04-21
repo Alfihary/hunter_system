@@ -87,17 +87,19 @@ class HomeScreen extends ConsumerWidget {
               leading: const Icon(Icons.restaurant_outlined),
               title: const Text('Nutrición'),
               subtitle: const Text(
-                'Metas diarias, alimentos y resumen del día',
+                'Manual, API, código de barras y resumen diario',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/nutrition'),
             ),
           ),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.auto_graph_outlined),
-              title: Text('Progreso RPG'),
-              subtitle: Text('Siguiente fase'),
+              leading: const Icon(Icons.auto_graph_outlined),
+              title: const Text('Hunter RPG'),
+              subtitle: const Text('Nivel, XP, stats y progreso global'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/rpg'),
             ),
           ),
         ],
