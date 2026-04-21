@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
 import '../../data/drift_workout_repository.dart';
+import '../../domain/exercise_last_session_summary.dart';
 import '../../domain/routine_exercise_input.dart';
+import '../../domain/workout_history_detail.dart';
+import '../../domain/workout_history_item.dart';
 import '../../domain/workout_repository.dart';
 import '../../domain/workout_routine_detail.dart';
 import '../../domain/workout_routine_summary.dart';
@@ -19,16 +22,6 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
 });
 
 /// Controlador principal del listado de rutinas.
-///
-/// ¿Qué hace?
-/// - carga rutinas
-/// - crea rutina
-/// - elimina rutina
-/// - inicia y finaliza sesiones
-/// - guarda sets
-///
-/// ¿Para qué sirve?
-/// Para que la UI no implemente lógica de negocio.
 class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
   late final WorkoutRepository _repository;
 
@@ -115,38 +108,44 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
 
 final workoutControllerProvider =
     AsyncNotifierProvider<WorkoutController, List<WorkoutRoutineSummary>>(
-  WorkoutController.new,
-);
+      WorkoutController.new,
+    );
 
 /// Provider de detalle de rutina.
-///
-/// ¿Qué hace?
-/// Carga la rutina completa por ID.
-///
-/// ¿Para qué sirve?
-/// Para iniciar una sesión con sus ejercicios.
 final workoutRoutineDetailProvider =
-    FutureProvider.family<WorkoutRoutineDetail?, String>(
-  (ref, routineId) {
-    final repository = ref.watch(workoutRepositoryProvider);
-    return repository.getRoutineDetail(routineId);
-  },
-);
+    FutureProvider.family<WorkoutRoutineDetail?, String>((ref, routineId) {
+      final repository = ref.watch(workoutRepositoryProvider);
+      return repository.getRoutineDetail(routineId);
+    });
 
 /// Provider reactivo de sets guardados en una sesión.
-///
-/// ¿Qué hace?
-/// Escucha la tabla de sets del workout actual y emite cambios en vivo.
-///
-/// ¿Para qué sirve?
-/// Para mostrar inmediatamente:
-/// - total de sets
-/// - sets por ejercicio
-/// - detalle del historial dentro de la sesión
 final workoutSetEntriesProvider =
-    StreamProvider.family<List<WorkoutSetEntry>, String>(
-  (ref, workoutId) {
-    final repository = ref.watch(workoutRepositoryProvider);
-    return repository.watchWorkoutSets(workoutId);
-  },
-);
+    StreamProvider.family<List<WorkoutSetEntry>, String>((ref, workoutId) {
+      final repository = ref.watch(workoutRepositoryProvider);
+      return repository.watchWorkoutSets(workoutId);
+    });
+
+/// Provider de comparación contra la última sesión completada.
+final lastRoutineSessionComparisonProvider =
+    FutureProvider.family<Map<String, ExerciseLastSessionSummary>, String>((
+      ref,
+      routineId,
+    ) {
+      final repository = ref.watch(workoutRepositoryProvider);
+      return repository.getLastSessionComparison(routineId);
+    });
+
+/// Provider del historial de sesiones terminadas.
+final completedWorkoutsProvider = FutureProvider<List<WorkoutHistoryItem>>((
+  ref,
+) {
+  final repository = ref.watch(workoutRepositoryProvider);
+  return repository.getCompletedWorkouts();
+});
+
+/// Provider de detalle de una sesión terminada.
+final workoutHistoryDetailProvider =
+    FutureProvider.family<WorkoutHistoryDetail?, String>((ref, workoutId) {
+      final repository = ref.watch(workoutRepositoryProvider);
+      return repository.getWorkoutHistoryDetail(workoutId);
+    });

@@ -1,33 +1,33 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/exercise_last_session_summary.dart';
 import '../../domain/routine_exercise_input.dart';
 import '../../domain/workout_block.dart';
 import '../../domain/workout_set_entry.dart';
 import '../../domain/workout_set_type.dart';
 import '../providers/workout_controller.dart';
 
-/// Pantalla de sesión de entrenamiento estilo rápido.
+/// Pantalla de sesión de entrenamiento.
 ///
 /// ¿Qué hace?
-/// - muestra un panel global de descanso arriba
-/// - agrupa ejercicios en tabs por bloque
-/// - permite capturar sets inline sin abrir diálogos
-/// - muestra cuántas series llevas por ejercicio
-/// - muestra el historial de sets dentro de cada card
+/// - muestra la rutina actual
+/// - permite iniciar/finalizar sesión
+/// - registra series inline
+/// - muestra contador actual/meta
+/// - muestra comparación contra la última sesión
+/// - controla un descanso global
 ///
 /// ¿Para qué sirve?
-/// Para que registrar una sesión sea rápido, fluido y cómodo,
-/// muy parecido al flujo de una app de entrenamiento real.
+/// Para que el usuario registre su entrenamiento con contexto real:
+/// no sólo qué hace hoy, sino también contra qué está comparando.
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
   final String routineId;
 
-  const WorkoutSessionScreen({
-    super.key,
-    required this.routineId,
-  });
+  const WorkoutSessionScreen({super.key, required this.routineId});
 
   @override
   ConsumerState<WorkoutSessionScreen> createState() =>
@@ -39,25 +39,17 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   bool _isStarting = false;
   bool _isFinishing = false;
 
-  /// Bloque seleccionado actualmente en las tabs.
   WorkoutBlock? _selectedBlock;
 
-  /// Timer global de descanso.
   Timer? _restTimer;
-
-  /// Segundos restantes del descanso actual.
   int _restSecondsRemaining = 0;
-
-  /// Duración total del descanso actual.
   int _restTotalSeconds = 60;
-
-  /// Preset seleccionado actualmente.
   int _selectedRestPreset = 60;
 
   bool get _isRestRunning =>
-      _restTimer != null &&
-      _restTimer!.isActive &&
-      _restSecondsRemaining > 0;
+      _restTimer != null && _restTimer!.isActive && _restSecondsRemaining > 0;
+
+  bool get _sessionStarted => _workoutId != null;
 
   @override
   void dispose() {
@@ -65,7 +57,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     super.dispose();
   }
 
-  /// Inicia la sesión real en base de datos.
   Future<void> _startWorkout() async {
     setState(() {
       _isStarting = true;
@@ -82,15 +73,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         _workoutId = workoutId;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesión iniciada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sesión iniciada.')));
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) {
         setState(() {
@@ -100,7 +91,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     }
   }
 
-  /// Finaliza la sesión actual.
   Future<void> _finishWorkout() async {
     if (_workoutId == null) return;
 
@@ -119,28 +109,22 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     });
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
     _restTimer?.cancel();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sesión finalizada.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Sesión finalizada.')));
 
     Navigator.of(context).pop();
   }
 
-  /// Inicia o reinicia el descanso global.
-  ///
-  /// ¿Qué hace?
-  /// Arranca una cuenta regresiva visible para todos los ejercicios.
-  ///
-  /// ¿Para qué sirve?
-  /// Para que el descanso no dependa de una card específica.
+  /// Inicia el cronómetro global de descanso.
   void _startRestTimer(int seconds) {
     _restTimer?.cancel();
 
@@ -150,7 +134,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       _restSecondsRemaining = seconds;
     });
 
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
@@ -163,9 +147,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           _restSecondsRemaining = 0;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Descanso terminado.')),
-        );
+        await HapticFeedback.mediumImpact();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Descanso terminado.')));
         return;
       }
 
@@ -175,7 +161,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     });
   }
 
-  /// Pausa o reanuda el descanso actual.
   void _togglePauseResumeTimer() {
     if (_restSecondsRemaining <= 0) return;
 
@@ -185,7 +170,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       return;
     }
 
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
@@ -198,9 +183,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           _restSecondsRemaining = 0;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Descanso terminado.')),
-        );
+        await HapticFeedback.mediumImpact();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Descanso terminado.')));
         return;
       }
 
@@ -212,7 +199,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     setState(() {});
   }
 
-  /// Reinicia el descanso y lo deja en cero.
   void _resetRestTimer() {
     _restTimer?.cancel();
 
@@ -221,11 +207,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     });
   }
 
-  /// Guarda un set directamente desde una card.
-  ///
-  /// ¿Qué hace?
-  /// Envía el set al controlador y, si sale bien,
-  /// arranca automáticamente el descanso global.
   Future<String?> _saveInlineSet({
     required RoutineExerciseInput exercise,
     required WorkoutSetType setType,
@@ -237,7 +218,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       return 'Primero debes iniciar la sesión.';
     }
 
-    final error = await ref.read(workoutControllerProvider.notifier).addWorkoutSet(
+    final error = await ref
+        .read(workoutControllerProvider.notifier)
+        .addWorkoutSet(
           workoutId: _workoutId!,
           exerciseName: exercise.name,
           muscleGroup: exercise.muscleGroup.name,
@@ -256,50 +239,62 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final routineAsync = ref.watch(workoutRoutineDetailProvider(widget.routineId));
+    final routineAsync = ref.watch(
+      workoutRoutineDetailProvider(widget.routineId),
+    );
+    final comparisonAsync = ref.watch(
+      lastRoutineSessionComparisonProvider(widget.routineId),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sesión de entrenamiento'),
-      ),
+      appBar: AppBar(title: const Text('Sesión')),
       body: routineAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              error.toString(),
-              textAlign: TextAlign.center,
-            ),
+            child: Text(error.toString(), textAlign: TextAlign.center),
           ),
         ),
         data: (routine) {
           if (routine == null) {
-            return const Center(
-              child: Text('No se encontró la rutina.'),
-            );
+            return const Center(child: Text('No se encontró la rutina.'));
           }
 
           final allSetsAsync = _workoutId == null
               ? const AsyncData<List<WorkoutSetEntry>>(<WorkoutSetEntry>[])
               : ref.watch(workoutSetEntriesProvider(_workoutId!));
 
-  final allSets = allSetsAsync.when(
-  data: (data) => data,
-  loading: () => const <WorkoutSetEntry>[],
-  error: (_, __) => const <WorkoutSetEntry>[],
-);
+          final allSets = allSetsAsync.when(
+            data: (value) => value,
+            loading: () => const <WorkoutSetEntry>[],
+            error: (_, __) => const <WorkoutSetEntry>[],
+          );
 
-          final availableBlocks = routine.exercises
-              .map((exercise) => WorkoutBlock.fromMuscleGroup(exercise.muscleGroup))
-              .toSet()
-              .toList()
-            ..sort((a, b) => a.sortIndex.compareTo(b.sortIndex));
+          final comparisonMap = comparisonAsync.when(
+            data: (value) => value,
+            loading: () => const <String, ExerciseLastSessionSummary>{},
+            error: (_, __) => const <String, ExerciseLastSessionSummary>{},
+          );
 
-          final currentBlock = _selectedBlock != null &&
-                  availableBlocks.contains(_selectedBlock)
+          final availableBlocks =
+              routine.exercises
+                  .map(
+                    (exercise) =>
+                        WorkoutBlock.fromMuscleGroup(exercise.muscleGroup),
+                  )
+                  .toSet()
+                  .toList()
+                ..sort((a, b) => a.sortIndex.compareTo(b.sortIndex));
+
+          if (availableBlocks.isEmpty) {
+            return const Center(
+              child: Text('Esta rutina no tiene ejercicios.'),
+            );
+          }
+
+          final currentBlock =
+              _selectedBlock != null && availableBlocks.contains(_selectedBlock)
               ? _selectedBlock!
               : availableBlocks.first;
 
@@ -310,18 +305,21 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
           return Column(
             children: [
-              _SessionHeader(
-                dateText: _formatDateHeader(DateTime.now()),
+              _CompactTopPanel(
+                routineName: routine.name,
                 totalSets: allSets.length,
-              ),
-              _RestTimerPanel(
+                sessionStarted: _sessionStarted,
+                isStarting: _isStarting,
+                isFinishing: _isFinishing,
                 remainingSeconds: _restSecondsRemaining,
                 totalSeconds: _restTotalSeconds,
                 selectedPreset: _selectedRestPreset,
-                isRunning: _isRestRunning,
+                isRestRunning: _isRestRunning,
                 onSelectPreset: _startRestTimer,
                 onPauseResume: _togglePauseResumeTimer,
                 onReset: _resetRestTimer,
+                onStart: _startWorkout,
+                onFinish: _finishWorkout,
               ),
               _WorkoutBlockTabs(
                 blocks: availableBlocks,
@@ -332,91 +330,39 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                   });
                 },
               ),
+              const SizedBox(height: 8),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Text(
-                              routine.name,
-                              style: Theme.of(context).textTheme.titleLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                            if (routine.description != null &&
-                                routine.description!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                routine.description!,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            Text('Ejercicios visibles: ${visibleExercises.length}'),
-                            const SizedBox(height: 6),
-                            Text('Sets totales guardados: ${allSets.length}'),
-                            const SizedBox(height: 16),
-                            if (_workoutId == null)
-                              FilledButton.icon(
-                                onPressed: _isStarting ? null : _startWorkout,
-                                icon: _isStarting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.play_arrow),
-                                label: const Text('Comenzar sesión'),
-                              )
-                            else
-                              FilledButton.icon(
-                                onPressed: _isFinishing ? null : _finishWorkout,
-                                icon: _isFinishing
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.stop),
-                                label: const Text('Finalizar sesión'),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
                     ...visibleExercises.map((exercise) {
                       final exerciseSets = allSets
                           .where((set) => set.exerciseName == exercise.name)
                           .toList();
 
+                      final previousSummary = comparisonMap[exercise.name];
+
                       return _ExerciseSessionCard(
                         key: ValueKey(exercise.name),
                         exercise: exercise,
                         sets: exerciseSets,
-                        enabled: _workoutId != null,
-                        onSaveSet: ({
-                          required WorkoutSetType setType,
-                          required int? reps,
-                          required int? durationSeconds,
-                          required double? weight,
-                        }) {
-                          return _saveInlineSet(
-                            exercise: exercise,
-                            setType: setType,
-                            reps: reps,
-                            durationSeconds: durationSeconds,
-                            weight: weight,
-                          );
-                        },
+                        previousSummary: previousSummary,
+                        enabled: _sessionStarted,
+                        onSaveSet:
+                            ({
+                              required WorkoutSetType setType,
+                              required int? reps,
+                              required int? durationSeconds,
+                              required double? weight,
+                            }) {
+                              return _saveInlineSet(
+                                exercise: exercise,
+                                setType: setType,
+                                reps: reps,
+                                durationSeconds: durationSeconds,
+                                weight: weight,
+                              );
+                            },
                       );
                     }),
                   ],
@@ -428,100 +374,40 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       ),
     );
   }
-
-  /// Formatea la fecha superior de la sesión.
-  String _formatDateHeader(DateTime date) {
-    const weekdays = [
-      'Lun',
-      'Mar',
-      'Mié',
-      'Jue',
-      'Vie',
-      'Sáb',
-      'Dom',
-    ];
-
-    final weekday = weekdays[date.weekday - 1];
-    return '$weekday ${date.day}/${date.month}/${date.year}';
-  }
 }
 
-/// Encabezado visual de la sesión.
-///
-/// ¿Qué hace?
-/// Muestra la fecha y una cápsula compacta de progreso.
-class _SessionHeader extends StatelessWidget {
-  final String dateText;
+/// Panel superior compacto.
+class _CompactTopPanel extends StatelessWidget {
+  final String routineName;
   final int totalSets;
-
-  const _SessionHeader({
-    required this.dateText,
-    required this.totalSets,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SESIÓN DE ENTRENAMIENTO',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  dateText,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Theme.of(context).colorScheme.primary),
-            ),
-            child: Text(
-              '$totalSets sets',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Panel global de descanso.
-///
-/// ¿Qué hace?
-/// Muestra el estado del descanso actual para toda la sesión.
-///
-/// ¿Para qué sirve?
-/// Para que el usuario siempre tenga visible cuánto le falta descansar.
-class _RestTimerPanel extends StatelessWidget {
+  final bool sessionStarted;
+  final bool isStarting;
+  final bool isFinishing;
   final int remainingSeconds;
   final int totalSeconds;
   final int selectedPreset;
-  final bool isRunning;
+  final bool isRestRunning;
   final ValueChanged<int> onSelectPreset;
   final VoidCallback onPauseResume;
   final VoidCallback onReset;
+  final Future<void> Function() onStart;
+  final Future<void> Function() onFinish;
 
-  const _RestTimerPanel({
+  const _CompactTopPanel({
+    required this.routineName,
+    required this.totalSets,
+    required this.sessionStarted,
+    required this.isStarting,
+    required this.isFinishing,
     required this.remainingSeconds,
     required this.totalSeconds,
     required this.selectedPreset,
-    required this.isRunning,
+    required this.isRestRunning,
     required this.onSelectPreset,
     required this.onPauseResume,
     required this.onReset,
+    required this.onStart,
+    required this.onFinish,
   });
 
   @override
@@ -530,69 +416,113 @@ class _RestTimerPanel extends StatelessWidget {
         ? 0.0
         : (remainingSeconds / totalSeconds).clamp(0.0, 1.0);
 
-    final statusText = remainingSeconds <= 0
+    final timerText = remainingSeconds <= 0
         ? 'Listo'
-        : isRunning
-            ? _formatSeconds(remainingSeconds)
-            : 'Pausado • ${_formatSeconds(remainingSeconds)}';
+        : _formatSeconds(remainingSeconds);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'DESCANSO ENTRE SERIES',
-                style: Theme.of(context).textTheme.labelLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      routineName,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                    ),
+                    child: Text(
+                      '$totalSets sets',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: LinearProgressIndicator(
                       value: remainingSeconds <= 0 ? 0 : progress,
-                      minHeight: 10,
+                      minHeight: 8,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    statusText,
+                    timerText,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  _PresetButton(
-                    label: '1 min',
-                    isSelected: selectedPreset == 60,
+                  _MiniPresetButton(
+                    label: '1m',
+                    selected: selectedPreset == 60,
                     onPressed: () => onSelectPreset(60),
                   ),
-                  _PresetButton(
-                    label: '2 min',
-                    isSelected: selectedPreset == 120,
+                  _MiniPresetButton(
+                    label: '2m',
+                    selected: selectedPreset == 120,
                     onPressed: () => onSelectPreset(120),
                   ),
-                  _PresetButton(
-                    label: '3 min',
-                    isSelected: selectedPreset == 180,
+                  _MiniPresetButton(
+                    label: '3m',
+                    selected: selectedPreset == 180,
                     onPressed: () => onSelectPreset(180),
                   ),
                   OutlinedButton(
                     onPressed: onPauseResume,
-                    child: Text(isRunning ? 'Pausar' : 'Reanudar'),
+                    child: Text(isRestRunning ? 'Pausar' : 'Reanudar'),
                   ),
                   OutlinedButton(
                     onPressed: onReset,
                     child: const Text('Reset'),
                   ),
+                  sessionStarted
+                      ? FilledButton(
+                          onPressed: isFinishing ? null : onFinish,
+                          child: isFinishing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Finalizar'),
+                        )
+                      : FilledButton(
+                          onPressed: isStarting ? null : onStart,
+                          child: isStarting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Comenzar'),
+                        ),
                 ],
               ),
             ],
@@ -609,15 +539,14 @@ class _RestTimerPanel extends StatelessWidget {
   }
 }
 
-/// Botón visual de preset de descanso.
-class _PresetButton extends StatelessWidget {
+class _MiniPresetButton extends StatelessWidget {
   final String label;
-  final bool isSelected;
+  final bool selected;
   final VoidCallback onPressed;
 
-  const _PresetButton({
+  const _MiniPresetButton({
     required this.label,
-    required this.isSelected,
+    required this.selected,
     required this.onPressed,
   });
 
@@ -626,8 +555,9 @@ class _PresetButton extends StatelessWidget {
     return FilledButton.tonal(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
+        visualDensity: VisualDensity.compact,
         side: BorderSide(
-          color: isSelected
+          color: selected
               ? Theme.of(context).colorScheme.primary
               : Colors.transparent,
         ),
@@ -637,10 +567,6 @@ class _PresetButton extends StatelessWidget {
   }
 }
 
-/// Tabs horizontales por bloque de entrenamiento.
-///
-/// ¿Qué hace?
-/// Filtra visualmente los ejercicios de la sesión.
 class _WorkoutBlockTabs extends StatelessWidget {
   final List<WorkoutBlock> blocks;
   final WorkoutBlock selectedBlock;
@@ -655,19 +581,18 @@ class _WorkoutBlockTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 54,
+      height: 46,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
         itemCount: blocks.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final block = blocks[index];
-          final isSelected = block == selectedBlock;
 
           return ChoiceChip(
             label: Text(block.label),
-            selected: isSelected,
+            selected: block == selectedBlock,
             onSelected: (_) => onSelected(block),
           );
         },
@@ -676,33 +601,28 @@ class _WorkoutBlockTabs extends StatelessWidget {
   }
 }
 
-/// Card de ejercicio con captura rápida de sets.
-///
-/// ¿Qué hace?
-/// Muestra:
-/// - nombre del ejercicio
-/// - contador de series
-/// - historial inline
-/// - input rápido de reps/segundos
-/// - toggle de dropset/isométrico
-///
-/// ¿Para qué sirve?
-/// Para registrar sets sin abrir ventanas adicionales.
+/// Card de ejercicio con:
+/// - progreso actual/meta
+/// - historial del día
+/// - comparación contra la última sesión
 class _ExerciseSessionCard extends ConsumerStatefulWidget {
   final RoutineExerciseInput exercise;
   final List<WorkoutSetEntry> sets;
+  final ExerciseLastSessionSummary? previousSummary;
   final bool enabled;
   final Future<String?> Function({
     required WorkoutSetType setType,
     required int? reps,
     required int? durationSeconds,
     required double? weight,
-  }) onSaveSet;
+  })
+  onSaveSet;
 
   const _ExerciseSessionCard({
     super.key,
     required this.exercise,
     required this.sets,
+    required this.previousSummary,
     required this.enabled,
     required this.onSaveSet,
   });
@@ -713,8 +633,9 @@ class _ExerciseSessionCard extends ConsumerStatefulWidget {
 }
 
 class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
-  final TextEditingController _valueController =
-      TextEditingController(text: '10');
+  final TextEditingController _mainValueController = TextEditingController(
+    text: '10',
+  );
 
   final TextEditingController _weightController = TextEditingController();
 
@@ -723,41 +644,40 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
 
   @override
   void dispose() {
-    _valueController.dispose();
+    _mainValueController.dispose();
     _weightController.dispose();
     super.dispose();
   }
 
-  /// Alterna entre normal y dropset.
-  void _toggleDropSet() {
+  void _setType(WorkoutSetType type) {
     setState(() {
-      _selectedType = _selectedType == WorkoutSetType.dropSet
-          ? WorkoutSetType.normal
-          : WorkoutSetType.dropSet;
-    });
-  }
+      _selectedType = type;
 
-  /// Alterna entre normal e isométrico.
-  void _toggleIsometric() {
-    setState(() {
-      _selectedType = _selectedType == WorkoutSetType.isometric
-          ? WorkoutSetType.normal
-          : WorkoutSetType.isometric;
+      if (_selectedType == WorkoutSetType.isometric) {
+        _mainValueController.text = '30';
+      } else {
+        _mainValueController.text = '10';
+      }
     });
   }
 
   Future<void> _submit() async {
-    if (!widget.enabled) return;
+    if (!widget.enabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero inicia la sesión.')),
+      );
+      return;
+    }
 
-    final rawValue = _valueController.text.trim();
+    final rawMain = _mainValueController.text.trim();
     final rawWeight = _weightController.text.trim();
 
     final weight = rawWeight.isEmpty ? null : double.tryParse(rawWeight);
 
     if (rawWeight.isNotEmpty && weight == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Peso inválido.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Peso inválido.')));
       return;
     }
 
@@ -765,7 +685,7 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
     int? durationSeconds;
 
     if (_selectedType == WorkoutSetType.isometric) {
-      durationSeconds = int.tryParse(rawValue);
+      durationSeconds = int.tryParse(rawMain);
 
       if (durationSeconds == null || durationSeconds <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -774,7 +694,7 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
         return;
       }
     } else {
-      reps = int.tryParse(rawValue);
+      reps = int.tryParse(rawMain);
 
       if (reps == null || reps <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -799,34 +719,32 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
 
     setState(() {
       _isSaving = false;
+      _selectedType = WorkoutSetType.normal;
+      _mainValueController.text = '10';
+      _weightController.clear();
     });
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
-
-    /// Después de guardar, regresamos a tipo normal
-    /// para evitar errores por olvidarse un toggle activo.
-    setState(() {
-      _selectedType = WorkoutSetType.normal;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final seriesCount = widget.sets.length;
+    final currentSets = widget.sets.length;
+    final targetSets = widget.exercise.targetSets;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Encabezado del ejercicio
+            /// Encabezado actual/meta.
             Row(
               children: [
                 Expanded(
@@ -837,7 +755,7 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
@@ -845,91 +763,105 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
                     color: Theme.of(context).colorScheme.primaryContainer,
                   ),
                   child: Text(
-                    '$seriesCount serie${seriesCount == 1 ? '' : 's'}',
-                    style: Theme.of(context).textTheme.titleSmall,
+                    '$currentSets/$targetSets series',
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
-            /// Historial inline del ejercicio
+            /// Resumen de la última sesión.
+            if (widget.previousSummary != null)
+              _PreviousSessionPanel(summary: widget.previousSummary!),
+
             if (widget.sets.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Aún no tienes sets guardados.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+              Text(
+                'Aún no has guardado series hoy.',
+                style: Theme.of(context).textTheme.bodyMedium,
               )
             else
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  children: List.generate(widget.sets.length, (index) {
-                    final set = widget.sets[index];
-                    return _SavedSetRow(
-                      seriesIndex: index + 1,
-                      set: set,
-                    );
-                  }),
-                ),
+              Column(
+                children: List.generate(widget.sets.length, (index) {
+                  return _SavedSetRow(
+                    seriesIndex: index + 1,
+                    set: widget.sets[index],
+                  );
+                }),
               ),
 
-            const Divider(height: 20),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
 
-            /// Captura rápida
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Normal'),
+                  selected: _selectedType == WorkoutSetType.normal,
+                  onSelected: !_isSaving
+                      ? (_) => _setType(WorkoutSetType.normal)
+                      : null,
+                ),
+                ChoiceChip(
+                  label: const Text('Dropset'),
+                  selected: _selectedType == WorkoutSetType.dropSet,
+                  onSelected: !_isSaving
+                      ? (_) => _setType(WorkoutSetType.dropSet)
+                      : null,
+                ),
+                ChoiceChip(
+                  label: const Text('Isométrico'),
+                  selected: _selectedType == WorkoutSetType.isometric,
+                  onSelected: !_isSaving
+                      ? (_) => _setType(WorkoutSetType.isometric)
+                      : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: TextField(
-                    controller: _valueController,
-                    enabled: widget.enabled && !_isSaving,
+                    controller: _mainValueController,
+                    enabled: !_isSaving,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
+                      isDense: true,
+                      labelText: _selectedType == WorkoutSetType.isometric
+                          ? 'Segundos'
+                          : 'Repeticiones',
                       hintText: _selectedType == WorkoutSetType.isometric
-                          ? 'segundos'
-                          : 'reps',
+                          ? 'Ej. 30'
+                          : 'Ej. 10',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _weightController,
+                    enabled: !_isSaving,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      labelText: 'Peso',
+                      hintText: 'opcional',
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 88,
-                  child: OutlinedButton(
-                    onPressed:
-                        widget.enabled && !_isSaving ? _toggleDropSet : null,
-                    child: Text(
-                      'DROP',
-                      style: TextStyle(
-                        fontWeight: _selectedType == WorkoutSetType.dropSet
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 78,
-                  child: OutlinedButton(
-                    onPressed:
-                        widget.enabled && !_isSaving ? _toggleIsometric : null,
-                    child: Text(
-                      'ISO',
-                      style: TextStyle(
-                        fontWeight: _selectedType == WorkoutSetType.isometric
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 120,
+                  width: 110,
                   child: FilledButton(
-                    onPressed: widget.enabled && !_isSaving ? _submit : null,
+                    onPressed: !_isSaving ? _submit : null,
                     child: _isSaving
                         ? const SizedBox(
                             width: 18,
@@ -941,18 +873,6 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-
-            /// Peso opcional
-            TextField(
-              controller: _weightController,
-              enabled: widget.enabled && !_isSaving,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Peso opcional',
-                hintText: 'Ej. 12.5',
-              ),
-            ),
           ],
         ),
       ),
@@ -960,18 +880,67 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
   }
 }
 
-/// Fila visual de set ya guardado.
+/// Panel de resumen de la última sesión.
 ///
 /// ¿Qué hace?
-/// Resume cada set en una línea compacta dentro de la card del ejercicio.
+/// Muestra de forma compacta:
+/// - total de series anteriores
+/// - mejor set anterior
+/// - peso máximo anterior
+/// - fecha de esa sesión
+class _PreviousSessionPanel extends StatelessWidget {
+  final ExerciseLastSessionSummary summary;
+
+  const _PreviousSessionPanel({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Última sesión · ${_formatDate(summary.performedAt)}',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: 6),
+          Text('Series: ${summary.totalSets}'),
+          Text(_buildBestSetText(summary)),
+          if (summary.heaviestWeight != null)
+            Text('Peso más alto: ${summary.heaviestWeight} kg'),
+        ],
+      ),
+    );
+  }
+
+  String _buildBestSetText(ExerciseLastSessionSummary summary) {
+    if (summary.bestReps != null) {
+      return 'Mejor set: ${summary.bestReps} reps';
+    }
+
+    if (summary.bestDurationSeconds != null) {
+      return 'Mejor set: ${summary.bestDurationSeconds}s';
+    }
+
+    return 'Mejor set: sin datos';
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
 class _SavedSetRow extends StatelessWidget {
   final int seriesIndex;
   final WorkoutSetEntry set;
 
-  const _SavedSetRow({
-    required this.seriesIndex,
-    required this.set,
-  });
+  const _SavedSetRow({required this.seriesIndex, required this.set});
 
   @override
   Widget build(BuildContext context) {
@@ -979,14 +948,8 @@ class _SavedSetRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: Text('Serie $seriesIndex'),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(_buildSetText()),
-          ),
+          SizedBox(width: 58, child: Text('Serie $seriesIndex')),
+          Expanded(child: Text(_buildSetText())),
           if (set.setType == WorkoutSetType.dropSet)
             Container(
               margin: const EdgeInsets.only(right: 8),
@@ -995,7 +958,7 @@ class _SavedSetRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 color: Theme.of(context).colorScheme.secondaryContainer,
               ),
-              child: const Text('DROPSET'),
+              child: const Text('DROP'),
             ),
           if (set.setType == WorkoutSetType.isometric)
             Container(

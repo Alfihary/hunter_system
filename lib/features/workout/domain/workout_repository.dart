@@ -1,4 +1,7 @@
+import 'exercise_last_session_summary.dart';
 import 'routine_exercise_input.dart';
+import 'workout_history_detail.dart';
+import 'workout_history_item.dart';
 import 'workout_routine_detail.dart';
 import 'workout_routine_summary.dart';
 import 'workout_set_entry.dart';
@@ -7,7 +10,12 @@ import 'workout_set_type.dart';
 /// Contrato del módulo de entrenamiento.
 ///
 /// ¿Qué hace?
-/// Define todas las operaciones disponibles para rutinas, sesiones y sets.
+/// Define todas las operaciones disponibles para:
+/// - rutinas
+/// - sesiones
+/// - sets
+/// - comparación con la última sesión
+/// - historial completo
 ///
 /// ¿Para qué sirve?
 /// Para desacoplar la UI de la implementación concreta con Drift.
@@ -36,17 +44,17 @@ abstract class WorkoutRepository {
     double? weight,
   });
 
-  /// Stream reactivo de sets guardados en una sesión.
-  ///
-  /// ¿Qué hace?
-  /// Emite la lista actualizada de sets cada vez que cambia la sesión.
-  ///
-  /// ¿Para qué sirve?
-  /// Para que la UI muestre automáticamente:
-  /// - total de sets
-  /// - sets por ejercicio
-  /// - detalle en vivo
   Stream<List<WorkoutSetEntry>> watchWorkoutSets(String workoutId);
+
+  Future<Map<String, ExerciseLastSessionSummary>> getLastSessionComparison(
+    String routineId,
+  );
+
+  /// Obtiene todas las sesiones terminadas ordenadas de más reciente a más antigua.
+  Future<List<WorkoutHistoryItem>> getCompletedWorkouts();
+
+  /// Obtiene el detalle completo de una sesión terminada.
+  Future<WorkoutHistoryDetail?> getWorkoutHistoryDetail(String workoutId);
 
   Future<void> finishWorkout(String workoutId);
 }

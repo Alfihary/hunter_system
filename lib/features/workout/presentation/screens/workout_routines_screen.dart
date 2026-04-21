@@ -12,6 +12,7 @@ import '../providers/workout_controller.dart';
 /// - crear rutina
 /// - iniciar sesión
 /// - eliminar rutina
+/// - abrir historial de entrenamientos
 ///
 /// ¿Para qué sirve?
 /// Es el punto de entrada del módulo workout.
@@ -25,6 +26,13 @@ class WorkoutRoutinesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rutinas'),
+        actions: [
+          IconButton(
+            tooltip: 'Historial',
+            onPressed: () => context.push('/workouts/history'),
+            icon: const Icon(Icons.history),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/workouts/form'),
@@ -32,9 +40,7 @@ class WorkoutRoutinesScreen extends ConsumerWidget {
         label: const Text('Nueva rutina'),
       ),
       body: routinesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -46,10 +52,7 @@ class WorkoutRoutinesScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                ),
+                Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () {
@@ -113,9 +116,7 @@ class _EmptyWorkoutView extends StatelessWidget {
 class _RoutineCard extends ConsumerWidget {
   final WorkoutRoutineSummary routine;
 
-  const _RoutineCard({
-    required this.routine,
-  });
+  const _RoutineCard({required this.routine});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,10 +126,7 @@ class _RoutineCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              routine.name,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(routine.name, style: Theme.of(context).textTheme.titleMedium),
             if (routine.description != null && routine.description!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -179,9 +177,9 @@ class _RoutineCard extends ConsumerWidget {
                         .deleteRoutine(routine.id);
 
                     if (error != null && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(error)),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error)));
                     }
                   },
                   icon: const Icon(Icons.delete_outline),

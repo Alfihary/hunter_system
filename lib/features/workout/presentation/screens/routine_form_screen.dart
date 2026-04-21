@@ -12,6 +12,7 @@ import '../providers/workout_controller.dart';
 /// - nombre
 /// - descripción
 /// - lista dinámica de ejercicios
+/// - meta de series por ejercicio
 ///
 /// ¿Para qué sirve?
 /// Para crear plantillas reutilizables de entrenamiento.
@@ -27,9 +28,7 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  final List<_ExerciseDraft> _exercises = [
-    _ExerciseDraft(),
-  ];
+  final List<_ExerciseDraft> _exercises = [_ExerciseDraft()];
 
   bool _isSaving = false;
 
@@ -69,21 +68,35 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
 
     for (final exercise in _exercises) {
       final name = exercise.nameController.text.trim();
+      final targetSets = int.tryParse(
+        exercise.targetSetsController.text.trim(),
+      );
+
       if (name.isEmpty) continue;
+
+      if (targetSets == null || targetSets <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'La meta de series del ejercicio "$name" no es válida.',
+            ),
+          ),
+        );
+        return;
+      }
 
       parsedExercises.add(
         RoutineExerciseInput(
           name: name,
           muscleGroup: exercise.muscleGroup,
+          targetSets: targetSets,
         ),
       );
     }
 
     if (parsedExercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Agrega al menos un ejercicio válido.'),
-        ),
+        const SnackBar(content: Text('Agrega al menos un ejercicio válido.')),
       );
       return;
     }
@@ -92,7 +105,9 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
       _isSaving = true;
     });
 
-    final error = await ref.read(workoutControllerProvider.notifier).createRoutine(
+    final error = await ref
+        .read(workoutControllerProvider.notifier)
+        .createRoutine(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
           exercises: parsedExercises,
@@ -105,9 +120,9 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
     });
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -117,9 +132,7 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nueva rutina'),
-      ),
+      appBar: AppBar(title: const Text('Nueva rutina')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Card(
@@ -204,15 +217,17 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
 }
 
 /// Borrador editable de ejercicio.
-///
-/// ¿Qué hace?
-/// Mantiene el estado temporal de un ejercicio del formulario.
 class _ExerciseDraft {
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController targetSetsController = TextEditingController(
+    text: '4',
+  );
+
   MuscleGroup muscleGroup = MuscleGroup.chest;
 
   void dispose() {
     nameController.dispose();
+    targetSetsController.dispose();
   }
 }
 
@@ -272,20 +287,36 @@ class _ExerciseDraftCardState extends State<_ExerciseDraftCard> {
             const SizedBox(height: 12),
             DropdownButtonFormField<MuscleGroup>(
               value: widget.draft.muscleGroup,
-              decoration: const InputDecoration(
-                labelText: 'Grupo muscular',
-              ),
+              decoration: const InputDecoration(labelText: 'Grupo muscular'),
               items: MuscleGroup.values.map((group) {
-                return DropdownMenuItem(
-                  value: group,
-                  child: Text(group.label),
-                );
+                return DropdownMenuItem(value: group, child: Text(group.label));
               }).toList(),
               onChanged: (value) {
                 if (value == null) return;
                 setState(() {
                   widget.draft.muscleGroup = value;
                 });
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: widget.draft.targetSetsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Meta de series',
+                hintText: 'Ej. 4',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Ingresa la meta de series';
+                }
+
+                final parsed = int.tryParse(value);
+                if (parsed == null || parsed <= 0) {
+                  return 'Debe ser un entero mayor que 0';
+                }
+
+                return null;
               },
             ),
           ],
