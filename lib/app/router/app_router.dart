@@ -8,6 +8,7 @@ import '../../features/habits/domain/habit_summary.dart';
 import '../../features/habits/presentation/screens/habit_form_screen.dart';
 import '../../features/habits/presentation/screens/habit_history_screen.dart';
 import '../../features/habits/presentation/screens/habits_screen.dart';
+import '../../features/health/presentation/screens/health_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/nutrition/domain/nutrition_search_result.dart';
 import '../../features/nutrition/presentation/screens/nutrition_barcode_scanner_screen.dart';
@@ -89,6 +90,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => NutritionLogFormScreen(
           initialSearchResult: state.extra as NutritionSearchResult?,
         ),
+      ),
+      GoRoute(
+        path: '/health',
+        builder: (context, state) => const HealthScreen(),
       ),
       GoRoute(
         path: '/rpg',

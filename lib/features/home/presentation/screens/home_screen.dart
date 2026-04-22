@@ -95,9 +95,20 @@ class HomeScreen extends ConsumerWidget {
           ),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.health_and_safety_outlined),
+              title: const Text('Health'),
+              subtitle: const Text(
+                'Pasos, sueño y actividad automática del dispositivo',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/health'),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.auto_graph_outlined),
               title: const Text('Hunter RPG'),
-              subtitle: const Text('Nivel, XP, stats y progreso global'),
+              subtitle: const Text('Nivel, XP, rangos, títulos y logros'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/rpg'),
             ),
