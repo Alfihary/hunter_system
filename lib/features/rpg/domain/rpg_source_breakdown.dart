@@ -5,6 +5,8 @@
 /// - hábitos
 /// - entrenamiento
 /// - nutrición
+/// - health
+/// - misiones
 ///
 /// ¿Para qué sirve?
 /// Para que el usuario entienda claramente
@@ -13,13 +15,17 @@ class RpgSourceBreakdown {
   final int habitsXp;
   final int workoutsXp;
   final int nutritionXp;
+  final int healthXp;
+  final int questsXp;
 
   const RpgSourceBreakdown({
     required this.habitsXp,
     required this.workoutsXp,
     required this.nutritionXp,
+    required this.healthXp,
+    required this.questsXp,
   });
 
   /// XP total sumado entre todas las fuentes.
-  int get totalXp => habitsXp + workoutsXp + nutritionXp;
+  int get totalXp => habitsXp + workoutsXp + nutritionXp + healthXp + questsXp;
 }

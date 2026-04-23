@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../health/domain/health_repository.dart';
 import '../../nutrition/domain/meal_type.dart';
 import '../domain/achievement.dart';
 import '../domain/achievement_rarity.dart';
@@ -11,10 +12,11 @@ import '../domain/rpg_source_breakdown.dart';
 import '../domain/rpg_stats.dart';
 import '../domain/rpg_title.dart';
 
-/// Repositorio RPG derivado desde hábitos, entrenamiento y nutrición.
+/// Repositorio RPG derivado desde hábitos, entrenamiento, nutrición,
+/// health y quests persistentes.
 ///
 /// ¿Qué hace?
-/// Lee las tablas ya existentes del sistema y calcula:
+/// Lee las tablas existentes del sistema y calcula:
 /// - XP
 /// - nivel
 /// - rango
@@ -25,11 +27,12 @@ import '../domain/rpg_title.dart';
 ///
 /// ¿Para qué sirve?
 /// Para conectar todo el ecosistema de la app al RPG
-/// sin duplicar información ni crear deuda técnica temprana.
+/// usando datos reales y persistidos.
 class DerivedRpgRepository implements RpgRepository {
   final AppDatabase db;
+  final HealthRepository healthRepository;
 
-  DerivedRpgRepository(this.db);
+  DerivedRpgRepository(this.db, {required this.healthRepository});
 
   @override
   Future<RpgOverview> getOverview() async {
@@ -178,6 +181,101 @@ class DerivedRpgRepository implements RpgRepository {
         current: metrics.triadDays,
         target: 1,
       ),
+
+      /// Health
+      _achievement(
+        id: 'first_step',
+        name: 'Primer Paso del Cazador',
+        description: 'Registra tu primer día con pasos sincronizados.',
+        rarity: AchievementRarity.common,
+        current: metrics.healthRecordedDays,
+        target: 1,
+      ),
+      _achievement(
+        id: 'hunter_stride',
+        name: 'Zancada del Cazador',
+        description: 'Cumple la meta de pasos 3 días.',
+        rarity: AchievementRarity.rare,
+        current: metrics.stepGoalDays,
+        target: 3,
+      ),
+      _achievement(
+        id: 'sanctuary_march',
+        name: 'Marcha del Santuario',
+        description: 'Cumple la meta de pasos 7 días.',
+        rarity: AchievementRarity.epic,
+        current: metrics.stepGoalDays,
+        target: 7,
+      ),
+      _achievement(
+        id: 'sleep_of_steel',
+        name: 'Sueño de Acero',
+        description: 'Cumple tu meta de sueño 3 días.',
+        rarity: AchievementRarity.rare,
+        current: metrics.sleepGoalDays,
+        target: 3,
+      ),
+      _achievement(
+        id: 'night_rebirth',
+        name: 'Renacer Nocturno',
+        description: 'Cumple tu meta de sueño 7 días.',
+        rarity: AchievementRarity.epic,
+        current: metrics.sleepGoalDays,
+        target: 7,
+      ),
+      _achievement(
+        id: 'recovery_gate',
+        name: 'Puerta de la Recuperación',
+        description: 'Logra 3 días con pasos y sueño en meta el mismo día.',
+        rarity: AchievementRarity.legendary,
+        current: metrics.healthPerfectDays,
+        target: 3,
+      ),
+
+      /// Quests diarias
+      _achievement(
+        id: 'first_contract',
+        name: 'Primer Contrato',
+        description: 'Reclama tu primera misión diaria.',
+        rarity: AchievementRarity.common,
+        current: metrics.questClaimsCount,
+        target: 1,
+      ),
+      _achievement(
+        id: 'keeper_of_contracts',
+        name: 'Guardián de Contratos',
+        description: 'Reclama 25 misiones diarias.',
+        rarity: AchievementRarity.rare,
+        current: metrics.questClaimsCount,
+        target: 25,
+      ),
+      _achievement(
+        id: 'master_of_board',
+        name: 'Dominio del Tablón',
+        description: 'Completa las 7 misiones del día en 3 ocasiones.',
+        rarity: AchievementRarity.legendary,
+        current: metrics.fullMissionBoardDays,
+        target: 3,
+      ),
+
+      /// Recompensas semanales
+      _achievement(
+        id: 'first_weekly_cache',
+        name: 'Primer Arcón Semanal',
+        description: 'Reclama tu primera recompensa semanal.',
+        rarity: AchievementRarity.rare,
+        current: metrics.weeklyRewardClaimsCount,
+        target: 1,
+      ),
+      _achievement(
+        id: 'keeper_of_cycles',
+        name: 'Guardián de Ciclos',
+        description: 'Reclama 5 recompensas semanales.',
+        rarity: AchievementRarity.epic,
+        current: metrics.weeklyRewardClaimsCount,
+        target: 5,
+      ),
+
       _achievement(
         id: 'beyond_limit',
         name: 'Más Allá del Límite',
@@ -324,6 +422,64 @@ class DerivedRpgRepository implements RpgRepository {
             metrics.triadDays >= 7 && metrics.rank.index >= RpgRank.a.index,
         sortOrder: 24,
       ),
+
+      /// Health
+      _title(
+        id: 'pilgrim_of_sanctuary',
+        name: 'Peregrino del Santuario',
+        description:
+            'Tus pasos dejaron de ser paseo; ahora son una ruta de ascenso.',
+        requirementText: 'Cumple la meta de pasos 7 días',
+        unlocked: metrics.stepGoalDays >= 7,
+        sortOrder: 30,
+      ),
+      _title(
+        id: 'reborn_of_abyss',
+        name: 'Renacido del Abismo',
+        description:
+            'Dormir ya no es descanso común: es restauración de poder.',
+        requirementText: 'Cumple la meta de sueño 7 días',
+        unlocked: metrics.sleepGoalDays >= 7,
+        sortOrder: 31,
+      ),
+      _title(
+        id: 'walker_between_worlds',
+        name: 'Caminante entre Mundos',
+        description:
+            'Has convertido movimiento y recuperación en una sola disciplina.',
+        requirementText: 'Logra 5 días perfectos de Health',
+        unlocked: metrics.healthPerfectDays >= 5,
+        sortOrder: 32,
+      ),
+
+      /// Quests
+      _title(
+        id: 'agent_of_board',
+        name: 'Agente del Tablón',
+        description:
+            'Las misiones dejaron de ser lista; se volvieron contrato.',
+        requirementText: 'Reclama 25 misiones diarias',
+        unlocked: metrics.questClaimsCount >= 25,
+        sortOrder: 40,
+      ),
+      _title(
+        id: 'arbiter_of_dawn',
+        name: 'Árbitro del Alba',
+        description:
+            'Has dominado el día completo más de una vez. Eso ya no es suerte.',
+        requirementText: 'Completa las 7 misiones del día en 3 ocasiones',
+        unlocked: metrics.fullMissionBoardDays >= 3,
+        sortOrder: 41,
+      ),
+      _title(
+        id: 'warden_of_cycle',
+        name: 'Guardián del Ciclo',
+        description:
+            'Ya no sólo cumples contratos: también dominas el ritmo de las semanas.',
+        requirementText: 'Reclama 3 recompensas semanales',
+        unlocked: metrics.weeklyRewardClaimsCount >= 3,
+        sortOrder: 42,
+      ),
     ];
 
     final unlockedTitles = rawTitles
@@ -387,8 +543,11 @@ class DerivedRpgRepository implements RpgRepository {
         .write(RpgProfileSettingsCompanion(equippedTitleId: Value(titleId)));
   }
 
-  /// Carga y calcula todas las métricas necesarias del sistema RPG.
   Future<_RpgMetrics> _loadMetrics() async {
+    try {
+      await healthRepository.syncTodayToCache();
+    } catch (_) {}
+
     final habits = await db.select(db.habits).get();
     final habitLogs = await db.select(db.habitLogs).get();
 
@@ -399,6 +558,15 @@ class DerivedRpgRepository implements RpgRepository {
     final nutritionGoalRow = await (db.select(
       db.nutritionGoals,
     )..where((t) => t.id.equals(1))).getSingleOrNull();
+
+    final healthDays = await healthRepository.getCachedDailyRecords(
+      limitDays: 180,
+    );
+
+    final missionClaims = await db.select(db.dailyMissionClaims).get();
+    final weeklyRewardClaims = await db
+        .select(db.weeklyQuestRewardClaims)
+        .get();
 
     final habitXpById = <String, int>{
       for (final habit in habits) habit.id: habit.xpReward,
@@ -442,7 +610,6 @@ class DerivedRpgRepository implements RpgRepository {
 
     int nutritionProteinDays = 0;
     int nutritionGoodDays = 0;
-    int nutritionPerfectDays = 0;
 
     final proteinGoal = nutritionGoalRow?.proteinGoal ?? 160;
     final caloriesGoal = nutritionGoalRow?.caloriesGoal ?? 2200;
@@ -493,10 +660,6 @@ class DerivedRpgRepository implements RpgRepository {
         balanceScore += 3;
       }
 
-      if (proteinOk && caloriesOk && carbsOk && fatsOk) {
-        nutritionPerfectDays++;
-      }
-
       final mealTypesOfDay = logs.map((log) => log.mealType.toString()).toSet();
       if (mealTypesOfDay.length >= MealType.values.length) {
         nutritionXp += 5;
@@ -504,24 +667,108 @@ class DerivedRpgRepository implements RpgRepository {
       }
     }
 
+    int healthXp = 0;
+    int stepGoalDays = 0;
+    int sleepGoalDays = 0;
+    int healthPerfectDays = 0;
+
+    int enduranceScore = 0;
+    int consistencyScore = 0;
+
+    final healthActiveDateKeys = <String>{};
+
+    for (final day in healthDays) {
+      if (day.steps > 0 || day.totalSleepMinutes > 0) {
+        healthActiveDateKeys.add(day.dateKey);
+      }
+
+      if (day.steps >= 3000) {
+        healthXp += 5;
+        enduranceScore += 1;
+      }
+      if (day.steps >= 6000) {
+        healthXp += 10;
+        enduranceScore += 2;
+      }
+      if (day.steps >= day.goalSteps) {
+        healthXp += 15;
+        enduranceScore += 2;
+        consistencyScore += 2;
+        stepGoalDays++;
+      }
+      if (day.steps >= 10000) {
+        healthXp += 20;
+        enduranceScore += 2;
+      }
+
+      if (day.totalSleepMinutes >= 360) {
+        healthXp += 10;
+        recoveryScore += 2;
+      }
+      if (day.totalSleepMinutes >= day.goalSleepMinutes) {
+        healthXp += 15;
+        recoveryScore += 3;
+        balanceScore += 2;
+        sleepGoalDays++;
+      }
+      if (day.totalSleepMinutes >= 480) {
+        healthXp += 10;
+        recoveryScore += 2;
+      }
+
+      if (day.stepsGoalReached && day.sleepGoalReached) {
+        healthXp += 10;
+        balanceScore += 3;
+        consistencyScore += 1;
+        healthPerfectDays++;
+      }
+    }
+
+    final dailyQuestsXp = missionClaims.fold<int>(
+      0,
+      (sum, claim) => sum + claim.xpReward,
+    );
+
+    final weeklyQuestsXp = weeklyRewardClaims.fold<int>(
+      0,
+      (sum, claim) => sum + claim.xpReward,
+    );
+
+    final questsXp = dailyQuestsXp + weeklyQuestsXp;
+
+    final missionClaimsByDate = <String, int>{};
+    for (final claim in missionClaims) {
+      missionClaimsByDate[claim.dateKey] =
+          (missionClaimsByDate[claim.dateKey] ?? 0) + 1;
+    }
+
+    final questClaimsCount = missionClaims.length;
+    final weeklyRewardClaimsCount = weeklyRewardClaims.length;
+    final fullMissionBoardDays = missionClaimsByDate.values
+        .where((count) => count >= 7)
+        .length;
+
     final breakdown = RpgSourceBreakdown(
       habitsXp: habitsXp,
       workoutsXp: workoutsXp,
       nutritionXp: nutritionXp,
+      healthXp: healthXp,
+      questsXp: questsXp,
     );
 
     final totalXp = breakdown.totalXp;
     final rank = RpgRank.fromTotalXp(totalXp);
 
     int strengthScore = 0;
-    int enduranceScore = 0;
     int disciplineScore = 0;
-    int consistencyScore = 0;
 
     disciplineScore += habitLogs.length * 2;
+    disciplineScore += questClaimsCount;
+    disciplineScore += weeklyRewardClaimsCount * 2;
 
     final uniqueHabitDays = habitLogs.map((log) => log.dateKey).toSet();
     consistencyScore += uniqueHabitDays.length;
+    consistencyScore += fullMissionBoardDays * 2;
 
     for (final set in workoutSets) {
       switch (set.muscleGroupSnapshot) {
@@ -584,7 +831,13 @@ class DerivedRpgRepository implements RpgRepository {
       activityDateKeys.add(key);
     }
 
-    consistencyScore += activityDateKeys.length;
+    for (final day in healthDays) {
+      if (day.steps > 0 || day.totalSleepMinutes > 0) {
+        activityDateKeys.add(day.dateKey);
+      }
+    }
+
+    consistencyScore += healthActiveDateKeys.length;
 
     final triadDays = activityDateKeys.where((key) {
       return habitDateKeys.contains(key) &&
@@ -618,10 +871,16 @@ class DerivedRpgRepository implements RpgRepository {
       nutritionLogsCount: nutritionLogs.length,
       nutritionProteinDays: nutritionProteinDays,
       nutritionGoodDays: nutritionGoodDays,
-      nutritionPerfectDays: nutritionPerfectDays,
       triadDays: triadDays,
       currentActivityStreak: currentActivityStreak,
       bestActivityStreak: bestActivityStreak,
+      healthRecordedDays: healthDays.length,
+      stepGoalDays: stepGoalDays,
+      sleepGoalDays: sleepGoalDays,
+      healthPerfectDays: healthPerfectDays,
+      questClaimsCount: questClaimsCount,
+      weeklyRewardClaimsCount: weeklyRewardClaimsCount,
+      fullMissionBoardDays: fullMissionBoardDays,
     );
   }
 
@@ -663,7 +922,6 @@ class DerivedRpgRepository implements RpgRepository {
     );
   }
 
-  /// Obtiene el ID del título equipado desde la configuración persistida.
   Future<String?> _getStoredEquippedTitleId() async {
     final row = await (db.select(
       db.rpgProfileSettings,
@@ -672,7 +930,6 @@ class DerivedRpgRepository implements RpgRepository {
     return row?.equippedTitleId;
   }
 
-  /// Garantiza que exista la fila de configuración RPG.
   Future<void> _ensureProfileSettings() async {
     final row = await (db.select(
       db.rpgProfileSettings,
@@ -682,13 +939,12 @@ class DerivedRpgRepository implements RpgRepository {
       await db
           .into(db.rpgProfileSettings)
           .insert(
-            const RpgProfileSettingsCompanion(id: Value(1)),
+            RpgProfileSettingsCompanion.insert(id: const Value(1)),
             mode: InsertMode.insertOrIgnore,
           );
     }
   }
 
-  /// Convierte una fecha a YYYY-MM-DD.
   String _dateKey(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -697,10 +953,6 @@ class DerivedRpgRepository implements RpgRepository {
     return '$year-$month-$day';
   }
 
-  /// Calcula el nivel actual y el progreso al siguiente nivel.
-  ///
-  /// Regla usada:
-  /// - Para pasar de nivel N a N+1 se requieren N * 100 XP.
   _LevelInfo _calculateLevelInfo(int totalXp) {
     int level = 1;
     int remainingXp = totalXp;
@@ -717,7 +969,6 @@ class DerivedRpgRepository implements RpgRepository {
     );
   }
 
-  /// Calcula el rango actual y el progreso al siguiente rango.
   _RankInfo _calculateRankInfo(int totalXp) {
     final currentRank = RpgRank.fromTotalXp(totalXp);
     final nextRank = currentRank.nextRank;
@@ -742,7 +993,6 @@ class DerivedRpgRepository implements RpgRepository {
     );
   }
 
-  /// Calcula la racha actual de días activos.
   int _calculateCurrentStreak(Set<String> dateKeys) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -763,7 +1013,6 @@ class DerivedRpgRepository implements RpgRepository {
     return streak;
   }
 
-  /// Calcula la mejor racha histórica de actividad.
   int _calculateBestStreak(Set<String> dateKeys) {
     if (dateKeys.isEmpty) return 0;
 
@@ -791,7 +1040,6 @@ class DerivedRpgRepository implements RpgRepository {
   }
 }
 
-/// Resultado interno del cálculo de nivel.
 class _LevelInfo {
   final int level;
   final int xpIntoCurrentLevel;
@@ -804,7 +1052,6 @@ class _LevelInfo {
   });
 }
 
-/// Resultado interno del cálculo de rango.
 class _RankInfo {
   final RpgRank rank;
   final int xpIntoCurrentRank;
@@ -819,14 +1066,6 @@ class _RankInfo {
   });
 }
 
-/// Métricas agregadas del sistema RPG.
-///
-/// ¿Qué hace?
-/// Agrupa todas las señales derivadas de hábitos, entrenamiento y nutrición.
-///
-/// ¿Para qué sirve?
-/// Para reutilizarlas en overview, títulos y logros sin recalcular reglas
-/// separadas de manera inconsistente.
 class _RpgMetrics {
   final int totalXp;
   final RpgRank rank;
@@ -843,11 +1082,19 @@ class _RpgMetrics {
   final int nutritionLogsCount;
   final int nutritionProteinDays;
   final int nutritionGoodDays;
-  final int nutritionPerfectDays;
 
   final int triadDays;
   final int currentActivityStreak;
   final int bestActivityStreak;
+
+  final int healthRecordedDays;
+  final int stepGoalDays;
+  final int sleepGoalDays;
+  final int healthPerfectDays;
+
+  final int questClaimsCount;
+  final int weeklyRewardClaimsCount;
+  final int fullMissionBoardDays;
 
   const _RpgMetrics({
     required this.totalXp,
@@ -863,9 +1110,15 @@ class _RpgMetrics {
     required this.nutritionLogsCount,
     required this.nutritionProteinDays,
     required this.nutritionGoodDays,
-    required this.nutritionPerfectDays,
     required this.triadDays,
     required this.currentActivityStreak,
     required this.bestActivityStreak,
+    required this.healthRecordedDays,
+    required this.stepGoalDays,
+    required this.sleepGoalDays,
+    required this.healthPerfectDays,
+    required this.questClaimsCount,
+    required this.weeklyRewardClaimsCount,
+    required this.fullMissionBoardDays,
   });
 }

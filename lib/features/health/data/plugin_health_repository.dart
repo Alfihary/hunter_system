@@ -1,32 +1,37 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../core/database/app_database.dart';
 import '../domain/daily_steps_summary.dart';
+import '../domain/health_daily_record.dart';
 import '../domain/health_overview.dart';
 import '../domain/health_repository.dart';
 import '../domain/sleep_day_summary.dart';
 
-/// Implementación del módulo Health usando el plugin `health`.
+/// Implementación del módulo Health usando el plugin `health` + cache local.
 ///
 /// ¿Qué hace?
 /// - solicita permisos
 /// - lee pasos del día
 /// - lee sueño reciente
+/// - guarda snapshot diario en Drift
 ///
 /// ¿Para qué sirve?
-/// Para conectar la app con Apple Health / Health Connect
-/// sin meter todavía persistencia local.
+/// Para que Health funcione como fuente estable del RPG.
 class PluginHealthRepository implements HealthRepository {
   static const int _defaultStepsGoal = 8000;
   static const int _defaultSleepGoalMinutes = 7 * 60;
 
   final Health _health;
+  final AppDatabase db;
 
   bool _configured = false;
 
-  PluginHealthRepository({Health? health}) : _health = health ?? Health();
+  PluginHealthRepository(this.db, {Health? health})
+    : _health = health ?? Health();
 
   @override
   Future<bool> hasPermissions() async {
@@ -48,7 +53,6 @@ class PluginHealthRepository implements HealthRepository {
 
     await _ensureConfigured();
 
-    /// En Android, pasos requiere Activity Recognition.
     if (Platform.isAndroid) {
       final activityRecognition = await Permission.activityRecognition
           .request();
@@ -67,6 +71,47 @@ class PluginHealthRepository implements HealthRepository {
 
   @override
   Future<HealthOverview> getTodayOverview() async {
+    return _readTodayOverview(persistToCache: true);
+  }
+
+  @override
+  Future<void> syncTodayToCache() async {
+    await _readTodayOverview(persistToCache: true);
+  }
+
+  @override
+  Future<List<HealthDailyRecord>> getCachedDailyRecords({
+    int limitDays = 90,
+  }) async {
+    final rows =
+        await (db.select(db.healthDailySnapshots)
+              ..orderBy([(table) => OrderingTerm.desc(table.dateKey)])
+              ..limit(limitDays))
+            .get();
+
+    return rows
+        .map(
+          (row) => HealthDailyRecord(
+            dateKey: row.dateKey,
+            steps: row.steps,
+            goalSteps: row.goalSteps,
+            totalSleepMinutes: row.totalSleepMinutes,
+            goalSleepMinutes: row.goalSleepMinutes,
+            awakeMinutes: row.awakeMinutes,
+            lightMinutes: row.lightMinutes,
+            deepMinutes: row.deepMinutes,
+            remMinutes: row.remMinutes,
+            sessionCount: row.sessionCount,
+            syncedAt: row.syncedAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Lee el overview de hoy y opcionalmente lo guarda en cache.
+  Future<HealthOverview> _readTodayOverview({
+    required bool persistToCache,
+  }) async {
     final now = DateTime.now();
     final normalizedToday = DateTime(now.year, now.month, now.day);
 
@@ -112,6 +157,21 @@ class PluginHealthRepository implements HealthRepository {
     final steps = await _readStepsSummary(now);
     final sleep = await _readRecentSleepSummary(now);
 
+    if (persistToCache) {
+      await _upsertDailySnapshot(
+        dateKey: _dateKey(normalizedToday),
+        steps: steps.steps,
+        goalSteps: steps.goalSteps,
+        totalSleepMinutes: sleep.totalMinutesAsleep,
+        goalSleepMinutes: sleep.goalSleepMinutes,
+        awakeMinutes: sleep.awakeMinutes,
+        lightMinutes: sleep.lightMinutes,
+        deepMinutes: sleep.deepMinutes,
+        remMinutes: sleep.remMinutes,
+        sessionCount: sleep.sessionCount,
+      );
+    }
+
     return HealthOverview(
       date: normalizedToday,
       isSupportedPlatform: true,
@@ -135,10 +195,6 @@ class PluginHealthRepository implements HealthRepository {
       List<HealthDataAccess>.filled(_readTypes.length, HealthDataAccess.READ);
 
   /// Tipos de sueño usados en esta fase.
-  ///
-  /// Nota:
-  /// En iOS antiguo algunos stage types pueden variar.
-  /// Esta lista prioriza tipos útiles y comunes para Android/iOS modernos.
   List<HealthDataType> get _sleepTypes {
     final types = <HealthDataType>[
       HealthDataType.SLEEP_ASLEEP,
@@ -186,16 +242,6 @@ class PluginHealthRepository implements HealthRepository {
   }
 
   /// Lee el sueño reciente dentro de las últimas 24 horas.
-  ///
-  /// ¿Qué hace?
-  /// Consulta puntos de sueño y calcula:
-  /// - minutos dormidos
-  /// - minutos despierto
-  /// - minutos deep/rem/light
-  /// - cantidad de sesiones detectadas
-  ///
-  /// ¿Para qué sirve?
-  /// Para tener una primera versión simple y útil del módulo de sueño.
   Future<SleepDaySummary> _readRecentSleepSummary(DateTime now) async {
     final startTime = now.subtract(const Duration(hours: 24));
 
@@ -212,7 +258,6 @@ class PluginHealthRepository implements HealthRepository {
     int deepMinutes = 0;
     int remMinutes = 0;
 
-    /// Rango total de sueño sin doble contar.
     final asleepRanges = <_TimeRange>[];
 
     for (final point in uniquePoints) {
@@ -265,6 +310,48 @@ class PluginHealthRepository implements HealthRepository {
     );
   }
 
+  /// Inserta o actualiza el snapshot del día actual.
+  Future<void> _upsertDailySnapshot({
+    required String dateKey,
+    required int steps,
+    required int goalSteps,
+    required int totalSleepMinutes,
+    required int goalSleepMinutes,
+    required int awakeMinutes,
+    required int lightMinutes,
+    required int deepMinutes,
+    required int remMinutes,
+    required int sessionCount,
+  }) async {
+    await db
+        .into(db.healthDailySnapshots)
+        .insert(
+          HealthDailySnapshotsCompanion.insert(
+            dateKey: dateKey,
+            steps: Value(steps),
+            goalSteps: Value(goalSteps),
+            totalSleepMinutes: Value(totalSleepMinutes),
+            goalSleepMinutes: Value(goalSleepMinutes),
+            awakeMinutes: Value(awakeMinutes),
+            lightMinutes: Value(lightMinutes),
+            deepMinutes: Value(deepMinutes),
+            remMinutes: Value(remMinutes),
+            sessionCount: Value(sessionCount),
+            syncedAt: DateTime.now(),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+  }
+
+  /// Convierte una fecha a YYYY-MM-DD.
+  String _dateKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+
+    return '$year-$month-$day';
+  }
+
   /// Calcula minutos válidos entre dos fechas.
   int _safeMinutes(DateTime start, DateTime end) {
     if (!end.isAfter(start)) return 0;
@@ -276,7 +363,6 @@ class PluginHealthRepository implements HealthRepository {
     if (ranges.isEmpty) return const [];
 
     final sorted = [...ranges]..sort((a, b) => a.start.compareTo(b.start));
-
     final merged = <_TimeRange>[sorted.first];
 
     for (int i = 1; i < sorted.length; i++) {
@@ -299,12 +385,6 @@ class PluginHealthRepository implements HealthRepository {
 }
 
 /// Rango de tiempo interno.
-///
-/// ¿Qué hace?
-/// Representa un intervalo simple con inicio y fin.
-///
-/// ¿Para qué sirve?
-/// Para fusionar periodos de sueño y evitar doble conteo.
 class _TimeRange {
   final DateTime start;
   final DateTime end;

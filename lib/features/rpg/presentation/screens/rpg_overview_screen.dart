@@ -44,13 +44,7 @@ class RpgOverviewScreen extends ConsumerWidget {
           ),
         ),
         data: (overview) {
-          final titles = titlesAsync.when(
-            data: (value) => value,
-            loading: () => null,
-            error: (_, __) => null,
-          );
-
-          final equippedTitle = _findEquippedTitle(titles);
+          final equippedTitle = _findEquippedTitle(titlesAsync.asData?.value);
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -65,7 +59,7 @@ class RpgOverviewScreen extends ConsumerWidget {
                   _EquippedTitleCard(title: equippedTitle),
                   const SizedBox(height: 12),
                 ],
-                _QuickActionsCard(),
+                const _QuickActionsCard(),
                 const SizedBox(height: 12),
                 _RankCard(overview: overview),
                 const SizedBox(height: 12),
@@ -82,7 +76,6 @@ class RpgOverviewScreen extends ConsumerWidget {
     );
   }
 
-  /// Busca el título actualmente equipado.
   RpgTitle? _findEquippedTitle(List<RpgTitle>? titles) {
     if (titles == null) return null;
 
@@ -126,6 +119,8 @@ class _EquippedTitleCard extends StatelessWidget {
 }
 
 class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard();
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -135,6 +130,11 @@ class _QuickActionsCard extends StatelessWidget {
           spacing: 10,
           runSpacing: 10,
           children: [
+            FilledButton.icon(
+              onPressed: () => context.push('/missions'),
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Misiones'),
+            ),
             FilledButton.icon(
               onPressed: () => context.push('/rpg/achievements'),
               icon: const Icon(Icons.workspace_premium_outlined),
@@ -188,7 +188,7 @@ class _RankCard extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ] else
-              Text(
+              const Text(
                 'Has alcanzado el rango máximo actual.',
                 textAlign: TextAlign.center,
               ),
@@ -293,6 +293,10 @@ class _BreakdownCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _XpRow(label: 'Nutrición', value: overview.breakdown.nutritionXp),
+            const SizedBox(height: 8),
+            _XpRow(label: 'Health', value: overview.breakdown.healthXp),
+            const SizedBox(height: 8),
+            _XpRow(label: 'Misiones', value: overview.breakdown.questsXp),
           ],
         ),
       ),

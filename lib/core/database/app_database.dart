@@ -130,23 +130,72 @@ class NutritionLogs extends Table {
 /// TABLAS RPG
 /// ==============================
 
-/// Configuración persistente del módulo RPG.
-///
-/// ¿Qué hace?
-/// Guarda preferencias del personaje relacionadas con el RPG.
-///
-/// ¿Para qué sirve?
-/// En esta fase se usa para almacenar el título equipado.
 class RpgProfileSettings extends Table {
   IntColumn get id => integer()();
-
-  /// ID del título actualmente equipado.
-  ///
-  /// Puede ser nulo si el usuario aún no equipa ninguno.
   TextColumn get equippedTitleId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// ==============================
+/// TABLAS HEALTH
+/// ==============================
+
+class HealthDailySnapshots extends Table {
+  TextColumn get dateKey => text()();
+
+  IntColumn get steps => integer().withDefault(const Constant(0))();
+  IntColumn get goalSteps => integer().withDefault(const Constant(8000))();
+
+  IntColumn get totalSleepMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get goalSleepMinutes =>
+      integer().withDefault(const Constant(420))();
+
+  IntColumn get awakeMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get lightMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get deepMinutes => integer().withDefault(const Constant(0))();
+  IntColumn get remMinutes => integer().withDefault(const Constant(0))();
+
+  IntColumn get sessionCount => integer().withDefault(const Constant(0))();
+
+  DateTimeColumn get syncedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {dateKey};
+}
+
+/// ==============================
+/// TABLAS DE MISIONES
+/// ==============================
+
+class DailyMissionClaims extends Table {
+  TextColumn get dateKey => text()();
+  TextColumn get missionId => text()();
+  TextColumn get missionTitleSnapshot => text()();
+  IntColumn get xpReward => integer()();
+  DateTimeColumn get claimedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {dateKey, missionId};
+}
+
+/// Recompensas semanales reclamadas.
+///
+/// ¿Qué hace?
+/// Guarda qué recompensa semanal fue reclamada en una semana concreta.
+///
+/// ¿Para qué sirve?
+/// Para evitar doble reclamo del bonus semanal.
+class WeeklyQuestRewardClaims extends Table {
+  TextColumn get weekKey => text()();
+  TextColumn get rewardId => text()();
+  TextColumn get rewardTitleSnapshot => text()();
+  IntColumn get xpReward => integer()();
+  DateTimeColumn get claimedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {weekKey, rewardId};
 }
 
 @DriftDatabase(
@@ -160,14 +209,17 @@ class RpgProfileSettings extends Table {
     NutritionGoals,
     NutritionLogs,
     RpgProfileSettings,
+    HealthDailySnapshots,
+    DailyMissionClaims,
+    WeeklyQuestRewardClaims,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
-  /// Subimos a 6 porque agregamos configuración RPG persistente.
+  /// Subimos a 9 porque agregamos reclamos de recompensas semanales.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -222,6 +274,18 @@ class AppDatabase extends _$AppDatabase {
               (id, equipped_title_id)
               VALUES (1, NULL)
             ''');
+      }
+
+      if (from < 7) {
+        await m.createTable(healthDailySnapshots);
+      }
+
+      if (from < 8) {
+        await m.createTable(dailyMissionClaims);
+      }
+
+      if (from < 9) {
+        await m.createTable(weeklyQuestRewardClaims);
       }
     },
     beforeOpen: (details) async {

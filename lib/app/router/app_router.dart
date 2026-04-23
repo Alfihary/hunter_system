@@ -15,6 +15,7 @@ import '../../features/nutrition/presentation/screens/nutrition_barcode_scanner_
 import '../../features/nutrition/presentation/screens/nutrition_log_form_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_search_screen.dart';
+import '../../features/quests/presentation/screens/daily_missions_screen.dart';
 import '../../features/rpg/presentation/screens/rpg_achievements_screen.dart';
 import '../../features/rpg/presentation/screens/rpg_overview_screen.dart';
 import '../../features/rpg/presentation/screens/rpg_titles_screen.dart';
@@ -36,6 +37,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/missions',
+        builder: (context, state) => const DailyMissionsScreen(),
+      ),
       GoRoute(
         path: '/habits',
         builder: (context, state) => const HabitsScreen(),

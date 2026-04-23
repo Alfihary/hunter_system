@@ -64,6 +64,17 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Misiones diarias'),
+              subtitle: const Text(
+                'Objetivos del día con recompensas permanentes',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/missions'),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.local_fire_department_outlined),
               title: const Text('Hábitos'),
               subtitle: const Text(
@@ -108,7 +119,9 @@ class HomeScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.auto_graph_outlined),
               title: const Text('Hunter RPG'),
-              subtitle: const Text('Nivel, XP, rangos, títulos y logros'),
+              subtitle: const Text(
+                'Nivel, XP, rangos, títulos, logros y quests',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/rpg'),
             ),

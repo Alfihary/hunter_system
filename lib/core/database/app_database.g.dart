@@ -3620,10 +3620,6 @@ class $RpgProfileSettingsTable extends RpgProfileSettings
 class RpgProfileSetting extends DataClass
     implements Insertable<RpgProfileSetting> {
   final int id;
-
-  /// ID del título actualmente equipado.
-  ///
-  /// Puede ser nulo si el usuario aún no equipa ninguno.
   final String? equippedTitleId;
   const RpgProfileSetting({required this.id, this.equippedTitleId});
   @override
@@ -3754,6 +3750,1447 @@ class RpgProfileSettingsCompanion extends UpdateCompanion<RpgProfileSetting> {
   }
 }
 
+class $HealthDailySnapshotsTable extends HealthDailySnapshots
+    with TableInfo<$HealthDailySnapshotsTable, HealthDailySnapshot> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HealthDailySnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dateKeyMeta = const VerificationMeta(
+    'dateKey',
+  );
+  @override
+  late final GeneratedColumn<String> dateKey = GeneratedColumn<String>(
+    'date_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stepsMeta = const VerificationMeta('steps');
+  @override
+  late final GeneratedColumn<int> steps = GeneratedColumn<int>(
+    'steps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _goalStepsMeta = const VerificationMeta(
+    'goalSteps',
+  );
+  @override
+  late final GeneratedColumn<int> goalSteps = GeneratedColumn<int>(
+    'goal_steps',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(8000),
+  );
+  static const VerificationMeta _totalSleepMinutesMeta = const VerificationMeta(
+    'totalSleepMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> totalSleepMinutes = GeneratedColumn<int>(
+    'total_sleep_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _goalSleepMinutesMeta = const VerificationMeta(
+    'goalSleepMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> goalSleepMinutes = GeneratedColumn<int>(
+    'goal_sleep_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(420),
+  );
+  static const VerificationMeta _awakeMinutesMeta = const VerificationMeta(
+    'awakeMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> awakeMinutes = GeneratedColumn<int>(
+    'awake_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lightMinutesMeta = const VerificationMeta(
+    'lightMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> lightMinutes = GeneratedColumn<int>(
+    'light_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _deepMinutesMeta = const VerificationMeta(
+    'deepMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> deepMinutes = GeneratedColumn<int>(
+    'deep_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _remMinutesMeta = const VerificationMeta(
+    'remMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> remMinutes = GeneratedColumn<int>(
+    'rem_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sessionCountMeta = const VerificationMeta(
+    'sessionCount',
+  );
+  @override
+  late final GeneratedColumn<int> sessionCount = GeneratedColumn<int>(
+    'session_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    dateKey,
+    steps,
+    goalSteps,
+    totalSleepMinutes,
+    goalSleepMinutes,
+    awakeMinutes,
+    lightMinutes,
+    deepMinutes,
+    remMinutes,
+    sessionCount,
+    syncedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'health_daily_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HealthDailySnapshot> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('date_key')) {
+      context.handle(
+        _dateKeyMeta,
+        dateKey.isAcceptableOrUnknown(data['date_key']!, _dateKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateKeyMeta);
+    }
+    if (data.containsKey('steps')) {
+      context.handle(
+        _stepsMeta,
+        steps.isAcceptableOrUnknown(data['steps']!, _stepsMeta),
+      );
+    }
+    if (data.containsKey('goal_steps')) {
+      context.handle(
+        _goalStepsMeta,
+        goalSteps.isAcceptableOrUnknown(data['goal_steps']!, _goalStepsMeta),
+      );
+    }
+    if (data.containsKey('total_sleep_minutes')) {
+      context.handle(
+        _totalSleepMinutesMeta,
+        totalSleepMinutes.isAcceptableOrUnknown(
+          data['total_sleep_minutes']!,
+          _totalSleepMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('goal_sleep_minutes')) {
+      context.handle(
+        _goalSleepMinutesMeta,
+        goalSleepMinutes.isAcceptableOrUnknown(
+          data['goal_sleep_minutes']!,
+          _goalSleepMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('awake_minutes')) {
+      context.handle(
+        _awakeMinutesMeta,
+        awakeMinutes.isAcceptableOrUnknown(
+          data['awake_minutes']!,
+          _awakeMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('light_minutes')) {
+      context.handle(
+        _lightMinutesMeta,
+        lightMinutes.isAcceptableOrUnknown(
+          data['light_minutes']!,
+          _lightMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('deep_minutes')) {
+      context.handle(
+        _deepMinutesMeta,
+        deepMinutes.isAcceptableOrUnknown(
+          data['deep_minutes']!,
+          _deepMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rem_minutes')) {
+      context.handle(
+        _remMinutesMeta,
+        remMinutes.isAcceptableOrUnknown(data['rem_minutes']!, _remMinutesMeta),
+      );
+    }
+    if (data.containsKey('session_count')) {
+      context.handle(
+        _sessionCountMeta,
+        sessionCount.isAcceptableOrUnknown(
+          data['session_count']!,
+          _sessionCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {dateKey};
+  @override
+  HealthDailySnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HealthDailySnapshot(
+      dateKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_key'],
+      )!,
+      steps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}steps'],
+      )!,
+      goalSteps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_steps'],
+      )!,
+      totalSleepMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_sleep_minutes'],
+      )!,
+      goalSleepMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_sleep_minutes'],
+      )!,
+      awakeMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}awake_minutes'],
+      )!,
+      lightMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}light_minutes'],
+      )!,
+      deepMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deep_minutes'],
+      )!,
+      remMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rem_minutes'],
+      )!,
+      sessionCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_count'],
+      )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HealthDailySnapshotsTable createAlias(String alias) {
+    return $HealthDailySnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class HealthDailySnapshot extends DataClass
+    implements Insertable<HealthDailySnapshot> {
+  final String dateKey;
+  final int steps;
+  final int goalSteps;
+  final int totalSleepMinutes;
+  final int goalSleepMinutes;
+  final int awakeMinutes;
+  final int lightMinutes;
+  final int deepMinutes;
+  final int remMinutes;
+  final int sessionCount;
+  final DateTime syncedAt;
+  const HealthDailySnapshot({
+    required this.dateKey,
+    required this.steps,
+    required this.goalSteps,
+    required this.totalSleepMinutes,
+    required this.goalSleepMinutes,
+    required this.awakeMinutes,
+    required this.lightMinutes,
+    required this.deepMinutes,
+    required this.remMinutes,
+    required this.sessionCount,
+    required this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['date_key'] = Variable<String>(dateKey);
+    map['steps'] = Variable<int>(steps);
+    map['goal_steps'] = Variable<int>(goalSteps);
+    map['total_sleep_minutes'] = Variable<int>(totalSleepMinutes);
+    map['goal_sleep_minutes'] = Variable<int>(goalSleepMinutes);
+    map['awake_minutes'] = Variable<int>(awakeMinutes);
+    map['light_minutes'] = Variable<int>(lightMinutes);
+    map['deep_minutes'] = Variable<int>(deepMinutes);
+    map['rem_minutes'] = Variable<int>(remMinutes);
+    map['session_count'] = Variable<int>(sessionCount);
+    map['synced_at'] = Variable<DateTime>(syncedAt);
+    return map;
+  }
+
+  HealthDailySnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return HealthDailySnapshotsCompanion(
+      dateKey: Value(dateKey),
+      steps: Value(steps),
+      goalSteps: Value(goalSteps),
+      totalSleepMinutes: Value(totalSleepMinutes),
+      goalSleepMinutes: Value(goalSleepMinutes),
+      awakeMinutes: Value(awakeMinutes),
+      lightMinutes: Value(lightMinutes),
+      deepMinutes: Value(deepMinutes),
+      remMinutes: Value(remMinutes),
+      sessionCount: Value(sessionCount),
+      syncedAt: Value(syncedAt),
+    );
+  }
+
+  factory HealthDailySnapshot.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HealthDailySnapshot(
+      dateKey: serializer.fromJson<String>(json['dateKey']),
+      steps: serializer.fromJson<int>(json['steps']),
+      goalSteps: serializer.fromJson<int>(json['goalSteps']),
+      totalSleepMinutes: serializer.fromJson<int>(json['totalSleepMinutes']),
+      goalSleepMinutes: serializer.fromJson<int>(json['goalSleepMinutes']),
+      awakeMinutes: serializer.fromJson<int>(json['awakeMinutes']),
+      lightMinutes: serializer.fromJson<int>(json['lightMinutes']),
+      deepMinutes: serializer.fromJson<int>(json['deepMinutes']),
+      remMinutes: serializer.fromJson<int>(json['remMinutes']),
+      sessionCount: serializer.fromJson<int>(json['sessionCount']),
+      syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'dateKey': serializer.toJson<String>(dateKey),
+      'steps': serializer.toJson<int>(steps),
+      'goalSteps': serializer.toJson<int>(goalSteps),
+      'totalSleepMinutes': serializer.toJson<int>(totalSleepMinutes),
+      'goalSleepMinutes': serializer.toJson<int>(goalSleepMinutes),
+      'awakeMinutes': serializer.toJson<int>(awakeMinutes),
+      'lightMinutes': serializer.toJson<int>(lightMinutes),
+      'deepMinutes': serializer.toJson<int>(deepMinutes),
+      'remMinutes': serializer.toJson<int>(remMinutes),
+      'sessionCount': serializer.toJson<int>(sessionCount),
+      'syncedAt': serializer.toJson<DateTime>(syncedAt),
+    };
+  }
+
+  HealthDailySnapshot copyWith({
+    String? dateKey,
+    int? steps,
+    int? goalSteps,
+    int? totalSleepMinutes,
+    int? goalSleepMinutes,
+    int? awakeMinutes,
+    int? lightMinutes,
+    int? deepMinutes,
+    int? remMinutes,
+    int? sessionCount,
+    DateTime? syncedAt,
+  }) => HealthDailySnapshot(
+    dateKey: dateKey ?? this.dateKey,
+    steps: steps ?? this.steps,
+    goalSteps: goalSteps ?? this.goalSteps,
+    totalSleepMinutes: totalSleepMinutes ?? this.totalSleepMinutes,
+    goalSleepMinutes: goalSleepMinutes ?? this.goalSleepMinutes,
+    awakeMinutes: awakeMinutes ?? this.awakeMinutes,
+    lightMinutes: lightMinutes ?? this.lightMinutes,
+    deepMinutes: deepMinutes ?? this.deepMinutes,
+    remMinutes: remMinutes ?? this.remMinutes,
+    sessionCount: sessionCount ?? this.sessionCount,
+    syncedAt: syncedAt ?? this.syncedAt,
+  );
+  HealthDailySnapshot copyWithCompanion(HealthDailySnapshotsCompanion data) {
+    return HealthDailySnapshot(
+      dateKey: data.dateKey.present ? data.dateKey.value : this.dateKey,
+      steps: data.steps.present ? data.steps.value : this.steps,
+      goalSteps: data.goalSteps.present ? data.goalSteps.value : this.goalSteps,
+      totalSleepMinutes: data.totalSleepMinutes.present
+          ? data.totalSleepMinutes.value
+          : this.totalSleepMinutes,
+      goalSleepMinutes: data.goalSleepMinutes.present
+          ? data.goalSleepMinutes.value
+          : this.goalSleepMinutes,
+      awakeMinutes: data.awakeMinutes.present
+          ? data.awakeMinutes.value
+          : this.awakeMinutes,
+      lightMinutes: data.lightMinutes.present
+          ? data.lightMinutes.value
+          : this.lightMinutes,
+      deepMinutes: data.deepMinutes.present
+          ? data.deepMinutes.value
+          : this.deepMinutes,
+      remMinutes: data.remMinutes.present
+          ? data.remMinutes.value
+          : this.remMinutes,
+      sessionCount: data.sessionCount.present
+          ? data.sessionCount.value
+          : this.sessionCount,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthDailySnapshot(')
+          ..write('dateKey: $dateKey, ')
+          ..write('steps: $steps, ')
+          ..write('goalSteps: $goalSteps, ')
+          ..write('totalSleepMinutes: $totalSleepMinutes, ')
+          ..write('goalSleepMinutes: $goalSleepMinutes, ')
+          ..write('awakeMinutes: $awakeMinutes, ')
+          ..write('lightMinutes: $lightMinutes, ')
+          ..write('deepMinutes: $deepMinutes, ')
+          ..write('remMinutes: $remMinutes, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    dateKey,
+    steps,
+    goalSteps,
+    totalSleepMinutes,
+    goalSleepMinutes,
+    awakeMinutes,
+    lightMinutes,
+    deepMinutes,
+    remMinutes,
+    sessionCount,
+    syncedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HealthDailySnapshot &&
+          other.dateKey == this.dateKey &&
+          other.steps == this.steps &&
+          other.goalSteps == this.goalSteps &&
+          other.totalSleepMinutes == this.totalSleepMinutes &&
+          other.goalSleepMinutes == this.goalSleepMinutes &&
+          other.awakeMinutes == this.awakeMinutes &&
+          other.lightMinutes == this.lightMinutes &&
+          other.deepMinutes == this.deepMinutes &&
+          other.remMinutes == this.remMinutes &&
+          other.sessionCount == this.sessionCount &&
+          other.syncedAt == this.syncedAt);
+}
+
+class HealthDailySnapshotsCompanion
+    extends UpdateCompanion<HealthDailySnapshot> {
+  final Value<String> dateKey;
+  final Value<int> steps;
+  final Value<int> goalSteps;
+  final Value<int> totalSleepMinutes;
+  final Value<int> goalSleepMinutes;
+  final Value<int> awakeMinutes;
+  final Value<int> lightMinutes;
+  final Value<int> deepMinutes;
+  final Value<int> remMinutes;
+  final Value<int> sessionCount;
+  final Value<DateTime> syncedAt;
+  final Value<int> rowid;
+  const HealthDailySnapshotsCompanion({
+    this.dateKey = const Value.absent(),
+    this.steps = const Value.absent(),
+    this.goalSteps = const Value.absent(),
+    this.totalSleepMinutes = const Value.absent(),
+    this.goalSleepMinutes = const Value.absent(),
+    this.awakeMinutes = const Value.absent(),
+    this.lightMinutes = const Value.absent(),
+    this.deepMinutes = const Value.absent(),
+    this.remMinutes = const Value.absent(),
+    this.sessionCount = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HealthDailySnapshotsCompanion.insert({
+    required String dateKey,
+    this.steps = const Value.absent(),
+    this.goalSteps = const Value.absent(),
+    this.totalSleepMinutes = const Value.absent(),
+    this.goalSleepMinutes = const Value.absent(),
+    this.awakeMinutes = const Value.absent(),
+    this.lightMinutes = const Value.absent(),
+    this.deepMinutes = const Value.absent(),
+    this.remMinutes = const Value.absent(),
+    this.sessionCount = const Value.absent(),
+    required DateTime syncedAt,
+    this.rowid = const Value.absent(),
+  }) : dateKey = Value(dateKey),
+       syncedAt = Value(syncedAt);
+  static Insertable<HealthDailySnapshot> custom({
+    Expression<String>? dateKey,
+    Expression<int>? steps,
+    Expression<int>? goalSteps,
+    Expression<int>? totalSleepMinutes,
+    Expression<int>? goalSleepMinutes,
+    Expression<int>? awakeMinutes,
+    Expression<int>? lightMinutes,
+    Expression<int>? deepMinutes,
+    Expression<int>? remMinutes,
+    Expression<int>? sessionCount,
+    Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (dateKey != null) 'date_key': dateKey,
+      if (steps != null) 'steps': steps,
+      if (goalSteps != null) 'goal_steps': goalSteps,
+      if (totalSleepMinutes != null) 'total_sleep_minutes': totalSleepMinutes,
+      if (goalSleepMinutes != null) 'goal_sleep_minutes': goalSleepMinutes,
+      if (awakeMinutes != null) 'awake_minutes': awakeMinutes,
+      if (lightMinutes != null) 'light_minutes': lightMinutes,
+      if (deepMinutes != null) 'deep_minutes': deepMinutes,
+      if (remMinutes != null) 'rem_minutes': remMinutes,
+      if (sessionCount != null) 'session_count': sessionCount,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HealthDailySnapshotsCompanion copyWith({
+    Value<String>? dateKey,
+    Value<int>? steps,
+    Value<int>? goalSteps,
+    Value<int>? totalSleepMinutes,
+    Value<int>? goalSleepMinutes,
+    Value<int>? awakeMinutes,
+    Value<int>? lightMinutes,
+    Value<int>? deepMinutes,
+    Value<int>? remMinutes,
+    Value<int>? sessionCount,
+    Value<DateTime>? syncedAt,
+    Value<int>? rowid,
+  }) {
+    return HealthDailySnapshotsCompanion(
+      dateKey: dateKey ?? this.dateKey,
+      steps: steps ?? this.steps,
+      goalSteps: goalSteps ?? this.goalSteps,
+      totalSleepMinutes: totalSleepMinutes ?? this.totalSleepMinutes,
+      goalSleepMinutes: goalSleepMinutes ?? this.goalSleepMinutes,
+      awakeMinutes: awakeMinutes ?? this.awakeMinutes,
+      lightMinutes: lightMinutes ?? this.lightMinutes,
+      deepMinutes: deepMinutes ?? this.deepMinutes,
+      remMinutes: remMinutes ?? this.remMinutes,
+      sessionCount: sessionCount ?? this.sessionCount,
+      syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (dateKey.present) {
+      map['date_key'] = Variable<String>(dateKey.value);
+    }
+    if (steps.present) {
+      map['steps'] = Variable<int>(steps.value);
+    }
+    if (goalSteps.present) {
+      map['goal_steps'] = Variable<int>(goalSteps.value);
+    }
+    if (totalSleepMinutes.present) {
+      map['total_sleep_minutes'] = Variable<int>(totalSleepMinutes.value);
+    }
+    if (goalSleepMinutes.present) {
+      map['goal_sleep_minutes'] = Variable<int>(goalSleepMinutes.value);
+    }
+    if (awakeMinutes.present) {
+      map['awake_minutes'] = Variable<int>(awakeMinutes.value);
+    }
+    if (lightMinutes.present) {
+      map['light_minutes'] = Variable<int>(lightMinutes.value);
+    }
+    if (deepMinutes.present) {
+      map['deep_minutes'] = Variable<int>(deepMinutes.value);
+    }
+    if (remMinutes.present) {
+      map['rem_minutes'] = Variable<int>(remMinutes.value);
+    }
+    if (sessionCount.present) {
+      map['session_count'] = Variable<int>(sessionCount.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthDailySnapshotsCompanion(')
+          ..write('dateKey: $dateKey, ')
+          ..write('steps: $steps, ')
+          ..write('goalSteps: $goalSteps, ')
+          ..write('totalSleepMinutes: $totalSleepMinutes, ')
+          ..write('goalSleepMinutes: $goalSleepMinutes, ')
+          ..write('awakeMinutes: $awakeMinutes, ')
+          ..write('lightMinutes: $lightMinutes, ')
+          ..write('deepMinutes: $deepMinutes, ')
+          ..write('remMinutes: $remMinutes, ')
+          ..write('sessionCount: $sessionCount, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DailyMissionClaimsTable extends DailyMissionClaims
+    with TableInfo<$DailyMissionClaimsTable, DailyMissionClaim> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DailyMissionClaimsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dateKeyMeta = const VerificationMeta(
+    'dateKey',
+  );
+  @override
+  late final GeneratedColumn<String> dateKey = GeneratedColumn<String>(
+    'date_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _missionIdMeta = const VerificationMeta(
+    'missionId',
+  );
+  @override
+  late final GeneratedColumn<String> missionId = GeneratedColumn<String>(
+    'mission_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _missionTitleSnapshotMeta =
+      const VerificationMeta('missionTitleSnapshot');
+  @override
+  late final GeneratedColumn<String> missionTitleSnapshot =
+      GeneratedColumn<String>(
+        'mission_title_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _xpRewardMeta = const VerificationMeta(
+    'xpReward',
+  );
+  @override
+  late final GeneratedColumn<int> xpReward = GeneratedColumn<int>(
+    'xp_reward',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _claimedAtMeta = const VerificationMeta(
+    'claimedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> claimedAt = GeneratedColumn<DateTime>(
+    'claimed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    dateKey,
+    missionId,
+    missionTitleSnapshot,
+    xpReward,
+    claimedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'daily_mission_claims';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DailyMissionClaim> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('date_key')) {
+      context.handle(
+        _dateKeyMeta,
+        dateKey.isAcceptableOrUnknown(data['date_key']!, _dateKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateKeyMeta);
+    }
+    if (data.containsKey('mission_id')) {
+      context.handle(
+        _missionIdMeta,
+        missionId.isAcceptableOrUnknown(data['mission_id']!, _missionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_missionIdMeta);
+    }
+    if (data.containsKey('mission_title_snapshot')) {
+      context.handle(
+        _missionTitleSnapshotMeta,
+        missionTitleSnapshot.isAcceptableOrUnknown(
+          data['mission_title_snapshot']!,
+          _missionTitleSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_missionTitleSnapshotMeta);
+    }
+    if (data.containsKey('xp_reward')) {
+      context.handle(
+        _xpRewardMeta,
+        xpReward.isAcceptableOrUnknown(data['xp_reward']!, _xpRewardMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_xpRewardMeta);
+    }
+    if (data.containsKey('claimed_at')) {
+      context.handle(
+        _claimedAtMeta,
+        claimedAt.isAcceptableOrUnknown(data['claimed_at']!, _claimedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {dateKey, missionId};
+  @override
+  DailyMissionClaim map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DailyMissionClaim(
+      dateKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date_key'],
+      )!,
+      missionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mission_id'],
+      )!,
+      missionTitleSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mission_title_snapshot'],
+      )!,
+      xpReward: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}xp_reward'],
+      )!,
+      claimedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}claimed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DailyMissionClaimsTable createAlias(String alias) {
+    return $DailyMissionClaimsTable(attachedDatabase, alias);
+  }
+}
+
+class DailyMissionClaim extends DataClass
+    implements Insertable<DailyMissionClaim> {
+  final String dateKey;
+  final String missionId;
+  final String missionTitleSnapshot;
+  final int xpReward;
+  final DateTime claimedAt;
+  const DailyMissionClaim({
+    required this.dateKey,
+    required this.missionId,
+    required this.missionTitleSnapshot,
+    required this.xpReward,
+    required this.claimedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['date_key'] = Variable<String>(dateKey);
+    map['mission_id'] = Variable<String>(missionId);
+    map['mission_title_snapshot'] = Variable<String>(missionTitleSnapshot);
+    map['xp_reward'] = Variable<int>(xpReward);
+    map['claimed_at'] = Variable<DateTime>(claimedAt);
+    return map;
+  }
+
+  DailyMissionClaimsCompanion toCompanion(bool nullToAbsent) {
+    return DailyMissionClaimsCompanion(
+      dateKey: Value(dateKey),
+      missionId: Value(missionId),
+      missionTitleSnapshot: Value(missionTitleSnapshot),
+      xpReward: Value(xpReward),
+      claimedAt: Value(claimedAt),
+    );
+  }
+
+  factory DailyMissionClaim.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DailyMissionClaim(
+      dateKey: serializer.fromJson<String>(json['dateKey']),
+      missionId: serializer.fromJson<String>(json['missionId']),
+      missionTitleSnapshot: serializer.fromJson<String>(
+        json['missionTitleSnapshot'],
+      ),
+      xpReward: serializer.fromJson<int>(json['xpReward']),
+      claimedAt: serializer.fromJson<DateTime>(json['claimedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'dateKey': serializer.toJson<String>(dateKey),
+      'missionId': serializer.toJson<String>(missionId),
+      'missionTitleSnapshot': serializer.toJson<String>(missionTitleSnapshot),
+      'xpReward': serializer.toJson<int>(xpReward),
+      'claimedAt': serializer.toJson<DateTime>(claimedAt),
+    };
+  }
+
+  DailyMissionClaim copyWith({
+    String? dateKey,
+    String? missionId,
+    String? missionTitleSnapshot,
+    int? xpReward,
+    DateTime? claimedAt,
+  }) => DailyMissionClaim(
+    dateKey: dateKey ?? this.dateKey,
+    missionId: missionId ?? this.missionId,
+    missionTitleSnapshot: missionTitleSnapshot ?? this.missionTitleSnapshot,
+    xpReward: xpReward ?? this.xpReward,
+    claimedAt: claimedAt ?? this.claimedAt,
+  );
+  DailyMissionClaim copyWithCompanion(DailyMissionClaimsCompanion data) {
+    return DailyMissionClaim(
+      dateKey: data.dateKey.present ? data.dateKey.value : this.dateKey,
+      missionId: data.missionId.present ? data.missionId.value : this.missionId,
+      missionTitleSnapshot: data.missionTitleSnapshot.present
+          ? data.missionTitleSnapshot.value
+          : this.missionTitleSnapshot,
+      xpReward: data.xpReward.present ? data.xpReward.value : this.xpReward,
+      claimedAt: data.claimedAt.present ? data.claimedAt.value : this.claimedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DailyMissionClaim(')
+          ..write('dateKey: $dateKey, ')
+          ..write('missionId: $missionId, ')
+          ..write('missionTitleSnapshot: $missionTitleSnapshot, ')
+          ..write('xpReward: $xpReward, ')
+          ..write('claimedAt: $claimedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    dateKey,
+    missionId,
+    missionTitleSnapshot,
+    xpReward,
+    claimedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DailyMissionClaim &&
+          other.dateKey == this.dateKey &&
+          other.missionId == this.missionId &&
+          other.missionTitleSnapshot == this.missionTitleSnapshot &&
+          other.xpReward == this.xpReward &&
+          other.claimedAt == this.claimedAt);
+}
+
+class DailyMissionClaimsCompanion extends UpdateCompanion<DailyMissionClaim> {
+  final Value<String> dateKey;
+  final Value<String> missionId;
+  final Value<String> missionTitleSnapshot;
+  final Value<int> xpReward;
+  final Value<DateTime> claimedAt;
+  final Value<int> rowid;
+  const DailyMissionClaimsCompanion({
+    this.dateKey = const Value.absent(),
+    this.missionId = const Value.absent(),
+    this.missionTitleSnapshot = const Value.absent(),
+    this.xpReward = const Value.absent(),
+    this.claimedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DailyMissionClaimsCompanion.insert({
+    required String dateKey,
+    required String missionId,
+    required String missionTitleSnapshot,
+    required int xpReward,
+    required DateTime claimedAt,
+    this.rowid = const Value.absent(),
+  }) : dateKey = Value(dateKey),
+       missionId = Value(missionId),
+       missionTitleSnapshot = Value(missionTitleSnapshot),
+       xpReward = Value(xpReward),
+       claimedAt = Value(claimedAt);
+  static Insertable<DailyMissionClaim> custom({
+    Expression<String>? dateKey,
+    Expression<String>? missionId,
+    Expression<String>? missionTitleSnapshot,
+    Expression<int>? xpReward,
+    Expression<DateTime>? claimedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (dateKey != null) 'date_key': dateKey,
+      if (missionId != null) 'mission_id': missionId,
+      if (missionTitleSnapshot != null)
+        'mission_title_snapshot': missionTitleSnapshot,
+      if (xpReward != null) 'xp_reward': xpReward,
+      if (claimedAt != null) 'claimed_at': claimedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DailyMissionClaimsCompanion copyWith({
+    Value<String>? dateKey,
+    Value<String>? missionId,
+    Value<String>? missionTitleSnapshot,
+    Value<int>? xpReward,
+    Value<DateTime>? claimedAt,
+    Value<int>? rowid,
+  }) {
+    return DailyMissionClaimsCompanion(
+      dateKey: dateKey ?? this.dateKey,
+      missionId: missionId ?? this.missionId,
+      missionTitleSnapshot: missionTitleSnapshot ?? this.missionTitleSnapshot,
+      xpReward: xpReward ?? this.xpReward,
+      claimedAt: claimedAt ?? this.claimedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (dateKey.present) {
+      map['date_key'] = Variable<String>(dateKey.value);
+    }
+    if (missionId.present) {
+      map['mission_id'] = Variable<String>(missionId.value);
+    }
+    if (missionTitleSnapshot.present) {
+      map['mission_title_snapshot'] = Variable<String>(
+        missionTitleSnapshot.value,
+      );
+    }
+    if (xpReward.present) {
+      map['xp_reward'] = Variable<int>(xpReward.value);
+    }
+    if (claimedAt.present) {
+      map['claimed_at'] = Variable<DateTime>(claimedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DailyMissionClaimsCompanion(')
+          ..write('dateKey: $dateKey, ')
+          ..write('missionId: $missionId, ')
+          ..write('missionTitleSnapshot: $missionTitleSnapshot, ')
+          ..write('xpReward: $xpReward, ')
+          ..write('claimedAt: $claimedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeeklyQuestRewardClaimsTable extends WeeklyQuestRewardClaims
+    with TableInfo<$WeeklyQuestRewardClaimsTable, WeeklyQuestRewardClaim> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeeklyQuestRewardClaimsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _weekKeyMeta = const VerificationMeta(
+    'weekKey',
+  );
+  @override
+  late final GeneratedColumn<String> weekKey = GeneratedColumn<String>(
+    'week_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rewardIdMeta = const VerificationMeta(
+    'rewardId',
+  );
+  @override
+  late final GeneratedColumn<String> rewardId = GeneratedColumn<String>(
+    'reward_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rewardTitleSnapshotMeta =
+      const VerificationMeta('rewardTitleSnapshot');
+  @override
+  late final GeneratedColumn<String> rewardTitleSnapshot =
+      GeneratedColumn<String>(
+        'reward_title_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _xpRewardMeta = const VerificationMeta(
+    'xpReward',
+  );
+  @override
+  late final GeneratedColumn<int> xpReward = GeneratedColumn<int>(
+    'xp_reward',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _claimedAtMeta = const VerificationMeta(
+    'claimedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> claimedAt = GeneratedColumn<DateTime>(
+    'claimed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    weekKey,
+    rewardId,
+    rewardTitleSnapshot,
+    xpReward,
+    claimedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weekly_quest_reward_claims';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WeeklyQuestRewardClaim> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('week_key')) {
+      context.handle(
+        _weekKeyMeta,
+        weekKey.isAcceptableOrUnknown(data['week_key']!, _weekKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weekKeyMeta);
+    }
+    if (data.containsKey('reward_id')) {
+      context.handle(
+        _rewardIdMeta,
+        rewardId.isAcceptableOrUnknown(data['reward_id']!, _rewardIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rewardIdMeta);
+    }
+    if (data.containsKey('reward_title_snapshot')) {
+      context.handle(
+        _rewardTitleSnapshotMeta,
+        rewardTitleSnapshot.isAcceptableOrUnknown(
+          data['reward_title_snapshot']!,
+          _rewardTitleSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rewardTitleSnapshotMeta);
+    }
+    if (data.containsKey('xp_reward')) {
+      context.handle(
+        _xpRewardMeta,
+        xpReward.isAcceptableOrUnknown(data['xp_reward']!, _xpRewardMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_xpRewardMeta);
+    }
+    if (data.containsKey('claimed_at')) {
+      context.handle(
+        _claimedAtMeta,
+        claimedAt.isAcceptableOrUnknown(data['claimed_at']!, _claimedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claimedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {weekKey, rewardId};
+  @override
+  WeeklyQuestRewardClaim map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeeklyQuestRewardClaim(
+      weekKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}week_key'],
+      )!,
+      rewardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reward_id'],
+      )!,
+      rewardTitleSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reward_title_snapshot'],
+      )!,
+      xpReward: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}xp_reward'],
+      )!,
+      claimedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}claimed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WeeklyQuestRewardClaimsTable createAlias(String alias) {
+    return $WeeklyQuestRewardClaimsTable(attachedDatabase, alias);
+  }
+}
+
+class WeeklyQuestRewardClaim extends DataClass
+    implements Insertable<WeeklyQuestRewardClaim> {
+  final String weekKey;
+  final String rewardId;
+  final String rewardTitleSnapshot;
+  final int xpReward;
+  final DateTime claimedAt;
+  const WeeklyQuestRewardClaim({
+    required this.weekKey,
+    required this.rewardId,
+    required this.rewardTitleSnapshot,
+    required this.xpReward,
+    required this.claimedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['week_key'] = Variable<String>(weekKey);
+    map['reward_id'] = Variable<String>(rewardId);
+    map['reward_title_snapshot'] = Variable<String>(rewardTitleSnapshot);
+    map['xp_reward'] = Variable<int>(xpReward);
+    map['claimed_at'] = Variable<DateTime>(claimedAt);
+    return map;
+  }
+
+  WeeklyQuestRewardClaimsCompanion toCompanion(bool nullToAbsent) {
+    return WeeklyQuestRewardClaimsCompanion(
+      weekKey: Value(weekKey),
+      rewardId: Value(rewardId),
+      rewardTitleSnapshot: Value(rewardTitleSnapshot),
+      xpReward: Value(xpReward),
+      claimedAt: Value(claimedAt),
+    );
+  }
+
+  factory WeeklyQuestRewardClaim.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeeklyQuestRewardClaim(
+      weekKey: serializer.fromJson<String>(json['weekKey']),
+      rewardId: serializer.fromJson<String>(json['rewardId']),
+      rewardTitleSnapshot: serializer.fromJson<String>(
+        json['rewardTitleSnapshot'],
+      ),
+      xpReward: serializer.fromJson<int>(json['xpReward']),
+      claimedAt: serializer.fromJson<DateTime>(json['claimedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'weekKey': serializer.toJson<String>(weekKey),
+      'rewardId': serializer.toJson<String>(rewardId),
+      'rewardTitleSnapshot': serializer.toJson<String>(rewardTitleSnapshot),
+      'xpReward': serializer.toJson<int>(xpReward),
+      'claimedAt': serializer.toJson<DateTime>(claimedAt),
+    };
+  }
+
+  WeeklyQuestRewardClaim copyWith({
+    String? weekKey,
+    String? rewardId,
+    String? rewardTitleSnapshot,
+    int? xpReward,
+    DateTime? claimedAt,
+  }) => WeeklyQuestRewardClaim(
+    weekKey: weekKey ?? this.weekKey,
+    rewardId: rewardId ?? this.rewardId,
+    rewardTitleSnapshot: rewardTitleSnapshot ?? this.rewardTitleSnapshot,
+    xpReward: xpReward ?? this.xpReward,
+    claimedAt: claimedAt ?? this.claimedAt,
+  );
+  WeeklyQuestRewardClaim copyWithCompanion(
+    WeeklyQuestRewardClaimsCompanion data,
+  ) {
+    return WeeklyQuestRewardClaim(
+      weekKey: data.weekKey.present ? data.weekKey.value : this.weekKey,
+      rewardId: data.rewardId.present ? data.rewardId.value : this.rewardId,
+      rewardTitleSnapshot: data.rewardTitleSnapshot.present
+          ? data.rewardTitleSnapshot.value
+          : this.rewardTitleSnapshot,
+      xpReward: data.xpReward.present ? data.xpReward.value : this.xpReward,
+      claimedAt: data.claimedAt.present ? data.claimedAt.value : this.claimedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyQuestRewardClaim(')
+          ..write('weekKey: $weekKey, ')
+          ..write('rewardId: $rewardId, ')
+          ..write('rewardTitleSnapshot: $rewardTitleSnapshot, ')
+          ..write('xpReward: $xpReward, ')
+          ..write('claimedAt: $claimedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(weekKey, rewardId, rewardTitleSnapshot, xpReward, claimedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeeklyQuestRewardClaim &&
+          other.weekKey == this.weekKey &&
+          other.rewardId == this.rewardId &&
+          other.rewardTitleSnapshot == this.rewardTitleSnapshot &&
+          other.xpReward == this.xpReward &&
+          other.claimedAt == this.claimedAt);
+}
+
+class WeeklyQuestRewardClaimsCompanion
+    extends UpdateCompanion<WeeklyQuestRewardClaim> {
+  final Value<String> weekKey;
+  final Value<String> rewardId;
+  final Value<String> rewardTitleSnapshot;
+  final Value<int> xpReward;
+  final Value<DateTime> claimedAt;
+  final Value<int> rowid;
+  const WeeklyQuestRewardClaimsCompanion({
+    this.weekKey = const Value.absent(),
+    this.rewardId = const Value.absent(),
+    this.rewardTitleSnapshot = const Value.absent(),
+    this.xpReward = const Value.absent(),
+    this.claimedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WeeklyQuestRewardClaimsCompanion.insert({
+    required String weekKey,
+    required String rewardId,
+    required String rewardTitleSnapshot,
+    required int xpReward,
+    required DateTime claimedAt,
+    this.rowid = const Value.absent(),
+  }) : weekKey = Value(weekKey),
+       rewardId = Value(rewardId),
+       rewardTitleSnapshot = Value(rewardTitleSnapshot),
+       xpReward = Value(xpReward),
+       claimedAt = Value(claimedAt);
+  static Insertable<WeeklyQuestRewardClaim> custom({
+    Expression<String>? weekKey,
+    Expression<String>? rewardId,
+    Expression<String>? rewardTitleSnapshot,
+    Expression<int>? xpReward,
+    Expression<DateTime>? claimedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (weekKey != null) 'week_key': weekKey,
+      if (rewardId != null) 'reward_id': rewardId,
+      if (rewardTitleSnapshot != null)
+        'reward_title_snapshot': rewardTitleSnapshot,
+      if (xpReward != null) 'xp_reward': xpReward,
+      if (claimedAt != null) 'claimed_at': claimedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WeeklyQuestRewardClaimsCompanion copyWith({
+    Value<String>? weekKey,
+    Value<String>? rewardId,
+    Value<String>? rewardTitleSnapshot,
+    Value<int>? xpReward,
+    Value<DateTime>? claimedAt,
+    Value<int>? rowid,
+  }) {
+    return WeeklyQuestRewardClaimsCompanion(
+      weekKey: weekKey ?? this.weekKey,
+      rewardId: rewardId ?? this.rewardId,
+      rewardTitleSnapshot: rewardTitleSnapshot ?? this.rewardTitleSnapshot,
+      xpReward: xpReward ?? this.xpReward,
+      claimedAt: claimedAt ?? this.claimedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (weekKey.present) {
+      map['week_key'] = Variable<String>(weekKey.value);
+    }
+    if (rewardId.present) {
+      map['reward_id'] = Variable<String>(rewardId.value);
+    }
+    if (rewardTitleSnapshot.present) {
+      map['reward_title_snapshot'] = Variable<String>(
+        rewardTitleSnapshot.value,
+      );
+    }
+    if (xpReward.present) {
+      map['xp_reward'] = Variable<int>(xpReward.value);
+    }
+    if (claimedAt.present) {
+      map['claimed_at'] = Variable<DateTime>(claimedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyQuestRewardClaimsCompanion(')
+          ..write('weekKey: $weekKey, ')
+          ..write('rewardId: $rewardId, ')
+          ..write('rewardTitleSnapshot: $rewardTitleSnapshot, ')
+          ..write('xpReward: $xpReward, ')
+          ..write('claimedAt: $claimedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3771,6 +5208,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $NutritionLogsTable nutritionLogs = $NutritionLogsTable(this);
   late final $RpgProfileSettingsTable rpgProfileSettings =
       $RpgProfileSettingsTable(this);
+  late final $HealthDailySnapshotsTable healthDailySnapshots =
+      $HealthDailySnapshotsTable(this);
+  late final $DailyMissionClaimsTable dailyMissionClaims =
+      $DailyMissionClaimsTable(this);
+  late final $WeeklyQuestRewardClaimsTable weeklyQuestRewardClaims =
+      $WeeklyQuestRewardClaimsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3785,6 +5228,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     nutritionGoals,
     nutritionLogs,
     rpgProfileSettings,
+    healthDailySnapshots,
+    dailyMissionClaims,
+    weeklyQuestRewardClaims,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6702,6 +8148,786 @@ typedef $$RpgProfileSettingsTableProcessedTableManager =
       RpgProfileSetting,
       PrefetchHooks Function()
     >;
+typedef $$HealthDailySnapshotsTableCreateCompanionBuilder =
+    HealthDailySnapshotsCompanion Function({
+      required String dateKey,
+      Value<int> steps,
+      Value<int> goalSteps,
+      Value<int> totalSleepMinutes,
+      Value<int> goalSleepMinutes,
+      Value<int> awakeMinutes,
+      Value<int> lightMinutes,
+      Value<int> deepMinutes,
+      Value<int> remMinutes,
+      Value<int> sessionCount,
+      required DateTime syncedAt,
+      Value<int> rowid,
+    });
+typedef $$HealthDailySnapshotsTableUpdateCompanionBuilder =
+    HealthDailySnapshotsCompanion Function({
+      Value<String> dateKey,
+      Value<int> steps,
+      Value<int> goalSteps,
+      Value<int> totalSleepMinutes,
+      Value<int> goalSleepMinutes,
+      Value<int> awakeMinutes,
+      Value<int> lightMinutes,
+      Value<int> deepMinutes,
+      Value<int> remMinutes,
+      Value<int> sessionCount,
+      Value<DateTime> syncedAt,
+      Value<int> rowid,
+    });
+
+class $$HealthDailySnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $HealthDailySnapshotsTable> {
+  $$HealthDailySnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dateKey => $composableBuilder(
+    column: $table.dateKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get goalSteps => $composableBuilder(
+    column: $table.goalSteps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalSleepMinutes => $composableBuilder(
+    column: $table.totalSleepMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get goalSleepMinutes => $composableBuilder(
+    column: $table.goalSleepMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get awakeMinutes => $composableBuilder(
+    column: $table.awakeMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lightMinutes => $composableBuilder(
+    column: $table.lightMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deepMinutes => $composableBuilder(
+    column: $table.deepMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remMinutes => $composableBuilder(
+    column: $table.remMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HealthDailySnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HealthDailySnapshotsTable> {
+  $$HealthDailySnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dateKey => $composableBuilder(
+    column: $table.dateKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get steps => $composableBuilder(
+    column: $table.steps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get goalSteps => $composableBuilder(
+    column: $table.goalSteps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalSleepMinutes => $composableBuilder(
+    column: $table.totalSleepMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get goalSleepMinutes => $composableBuilder(
+    column: $table.goalSleepMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get awakeMinutes => $composableBuilder(
+    column: $table.awakeMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lightMinutes => $composableBuilder(
+    column: $table.lightMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deepMinutes => $composableBuilder(
+    column: $table.deepMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remMinutes => $composableBuilder(
+    column: $table.remMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HealthDailySnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HealthDailySnapshotsTable> {
+  $$HealthDailySnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dateKey =>
+      $composableBuilder(column: $table.dateKey, builder: (column) => column);
+
+  GeneratedColumn<int> get steps =>
+      $composableBuilder(column: $table.steps, builder: (column) => column);
+
+  GeneratedColumn<int> get goalSteps =>
+      $composableBuilder(column: $table.goalSteps, builder: (column) => column);
+
+  GeneratedColumn<int> get totalSleepMinutes => $composableBuilder(
+    column: $table.totalSleepMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get goalSleepMinutes => $composableBuilder(
+    column: $table.goalSleepMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get awakeMinutes => $composableBuilder(
+    column: $table.awakeMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lightMinutes => $composableBuilder(
+    column: $table.lightMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get deepMinutes => $composableBuilder(
+    column: $table.deepMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get remMinutes => $composableBuilder(
+    column: $table.remMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sessionCount => $composableBuilder(
+    column: $table.sessionCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$HealthDailySnapshotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HealthDailySnapshotsTable,
+          HealthDailySnapshot,
+          $$HealthDailySnapshotsTableFilterComposer,
+          $$HealthDailySnapshotsTableOrderingComposer,
+          $$HealthDailySnapshotsTableAnnotationComposer,
+          $$HealthDailySnapshotsTableCreateCompanionBuilder,
+          $$HealthDailySnapshotsTableUpdateCompanionBuilder,
+          (
+            HealthDailySnapshot,
+            BaseReferences<
+              _$AppDatabase,
+              $HealthDailySnapshotsTable,
+              HealthDailySnapshot
+            >,
+          ),
+          HealthDailySnapshot,
+          PrefetchHooks Function()
+        > {
+  $$HealthDailySnapshotsTableTableManager(
+    _$AppDatabase db,
+    $HealthDailySnapshotsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HealthDailySnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HealthDailySnapshotsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$HealthDailySnapshotsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> dateKey = const Value.absent(),
+                Value<int> steps = const Value.absent(),
+                Value<int> goalSteps = const Value.absent(),
+                Value<int> totalSleepMinutes = const Value.absent(),
+                Value<int> goalSleepMinutes = const Value.absent(),
+                Value<int> awakeMinutes = const Value.absent(),
+                Value<int> lightMinutes = const Value.absent(),
+                Value<int> deepMinutes = const Value.absent(),
+                Value<int> remMinutes = const Value.absent(),
+                Value<int> sessionCount = const Value.absent(),
+                Value<DateTime> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HealthDailySnapshotsCompanion(
+                dateKey: dateKey,
+                steps: steps,
+                goalSteps: goalSteps,
+                totalSleepMinutes: totalSleepMinutes,
+                goalSleepMinutes: goalSleepMinutes,
+                awakeMinutes: awakeMinutes,
+                lightMinutes: lightMinutes,
+                deepMinutes: deepMinutes,
+                remMinutes: remMinutes,
+                sessionCount: sessionCount,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String dateKey,
+                Value<int> steps = const Value.absent(),
+                Value<int> goalSteps = const Value.absent(),
+                Value<int> totalSleepMinutes = const Value.absent(),
+                Value<int> goalSleepMinutes = const Value.absent(),
+                Value<int> awakeMinutes = const Value.absent(),
+                Value<int> lightMinutes = const Value.absent(),
+                Value<int> deepMinutes = const Value.absent(),
+                Value<int> remMinutes = const Value.absent(),
+                Value<int> sessionCount = const Value.absent(),
+                required DateTime syncedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HealthDailySnapshotsCompanion.insert(
+                dateKey: dateKey,
+                steps: steps,
+                goalSteps: goalSteps,
+                totalSleepMinutes: totalSleepMinutes,
+                goalSleepMinutes: goalSleepMinutes,
+                awakeMinutes: awakeMinutes,
+                lightMinutes: lightMinutes,
+                deepMinutes: deepMinutes,
+                remMinutes: remMinutes,
+                sessionCount: sessionCount,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HealthDailySnapshotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HealthDailySnapshotsTable,
+      HealthDailySnapshot,
+      $$HealthDailySnapshotsTableFilterComposer,
+      $$HealthDailySnapshotsTableOrderingComposer,
+      $$HealthDailySnapshotsTableAnnotationComposer,
+      $$HealthDailySnapshotsTableCreateCompanionBuilder,
+      $$HealthDailySnapshotsTableUpdateCompanionBuilder,
+      (
+        HealthDailySnapshot,
+        BaseReferences<
+          _$AppDatabase,
+          $HealthDailySnapshotsTable,
+          HealthDailySnapshot
+        >,
+      ),
+      HealthDailySnapshot,
+      PrefetchHooks Function()
+    >;
+typedef $$DailyMissionClaimsTableCreateCompanionBuilder =
+    DailyMissionClaimsCompanion Function({
+      required String dateKey,
+      required String missionId,
+      required String missionTitleSnapshot,
+      required int xpReward,
+      required DateTime claimedAt,
+      Value<int> rowid,
+    });
+typedef $$DailyMissionClaimsTableUpdateCompanionBuilder =
+    DailyMissionClaimsCompanion Function({
+      Value<String> dateKey,
+      Value<String> missionId,
+      Value<String> missionTitleSnapshot,
+      Value<int> xpReward,
+      Value<DateTime> claimedAt,
+      Value<int> rowid,
+    });
+
+class $$DailyMissionClaimsTableFilterComposer
+    extends Composer<_$AppDatabase, $DailyMissionClaimsTable> {
+  $$DailyMissionClaimsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dateKey => $composableBuilder(
+    column: $table.dateKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get missionId => $composableBuilder(
+    column: $table.missionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get missionTitleSnapshot => $composableBuilder(
+    column: $table.missionTitleSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get xpReward => $composableBuilder(
+    column: $table.xpReward,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get claimedAt => $composableBuilder(
+    column: $table.claimedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DailyMissionClaimsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DailyMissionClaimsTable> {
+  $$DailyMissionClaimsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dateKey => $composableBuilder(
+    column: $table.dateKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get missionId => $composableBuilder(
+    column: $table.missionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get missionTitleSnapshot => $composableBuilder(
+    column: $table.missionTitleSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get xpReward => $composableBuilder(
+    column: $table.xpReward,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get claimedAt => $composableBuilder(
+    column: $table.claimedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DailyMissionClaimsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DailyMissionClaimsTable> {
+  $$DailyMissionClaimsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dateKey =>
+      $composableBuilder(column: $table.dateKey, builder: (column) => column);
+
+  GeneratedColumn<String> get missionId =>
+      $composableBuilder(column: $table.missionId, builder: (column) => column);
+
+  GeneratedColumn<String> get missionTitleSnapshot => $composableBuilder(
+    column: $table.missionTitleSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get xpReward =>
+      $composableBuilder(column: $table.xpReward, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get claimedAt =>
+      $composableBuilder(column: $table.claimedAt, builder: (column) => column);
+}
+
+class $$DailyMissionClaimsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DailyMissionClaimsTable,
+          DailyMissionClaim,
+          $$DailyMissionClaimsTableFilterComposer,
+          $$DailyMissionClaimsTableOrderingComposer,
+          $$DailyMissionClaimsTableAnnotationComposer,
+          $$DailyMissionClaimsTableCreateCompanionBuilder,
+          $$DailyMissionClaimsTableUpdateCompanionBuilder,
+          (
+            DailyMissionClaim,
+            BaseReferences<
+              _$AppDatabase,
+              $DailyMissionClaimsTable,
+              DailyMissionClaim
+            >,
+          ),
+          DailyMissionClaim,
+          PrefetchHooks Function()
+        > {
+  $$DailyMissionClaimsTableTableManager(
+    _$AppDatabase db,
+    $DailyMissionClaimsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DailyMissionClaimsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DailyMissionClaimsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DailyMissionClaimsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> dateKey = const Value.absent(),
+                Value<String> missionId = const Value.absent(),
+                Value<String> missionTitleSnapshot = const Value.absent(),
+                Value<int> xpReward = const Value.absent(),
+                Value<DateTime> claimedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DailyMissionClaimsCompanion(
+                dateKey: dateKey,
+                missionId: missionId,
+                missionTitleSnapshot: missionTitleSnapshot,
+                xpReward: xpReward,
+                claimedAt: claimedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String dateKey,
+                required String missionId,
+                required String missionTitleSnapshot,
+                required int xpReward,
+                required DateTime claimedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DailyMissionClaimsCompanion.insert(
+                dateKey: dateKey,
+                missionId: missionId,
+                missionTitleSnapshot: missionTitleSnapshot,
+                xpReward: xpReward,
+                claimedAt: claimedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DailyMissionClaimsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DailyMissionClaimsTable,
+      DailyMissionClaim,
+      $$DailyMissionClaimsTableFilterComposer,
+      $$DailyMissionClaimsTableOrderingComposer,
+      $$DailyMissionClaimsTableAnnotationComposer,
+      $$DailyMissionClaimsTableCreateCompanionBuilder,
+      $$DailyMissionClaimsTableUpdateCompanionBuilder,
+      (
+        DailyMissionClaim,
+        BaseReferences<
+          _$AppDatabase,
+          $DailyMissionClaimsTable,
+          DailyMissionClaim
+        >,
+      ),
+      DailyMissionClaim,
+      PrefetchHooks Function()
+    >;
+typedef $$WeeklyQuestRewardClaimsTableCreateCompanionBuilder =
+    WeeklyQuestRewardClaimsCompanion Function({
+      required String weekKey,
+      required String rewardId,
+      required String rewardTitleSnapshot,
+      required int xpReward,
+      required DateTime claimedAt,
+      Value<int> rowid,
+    });
+typedef $$WeeklyQuestRewardClaimsTableUpdateCompanionBuilder =
+    WeeklyQuestRewardClaimsCompanion Function({
+      Value<String> weekKey,
+      Value<String> rewardId,
+      Value<String> rewardTitleSnapshot,
+      Value<int> xpReward,
+      Value<DateTime> claimedAt,
+      Value<int> rowid,
+    });
+
+class $$WeeklyQuestRewardClaimsTableFilterComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestRewardClaimsTable> {
+  $$WeeklyQuestRewardClaimsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get weekKey => $composableBuilder(
+    column: $table.weekKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rewardId => $composableBuilder(
+    column: $table.rewardId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rewardTitleSnapshot => $composableBuilder(
+    column: $table.rewardTitleSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get xpReward => $composableBuilder(
+    column: $table.xpReward,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get claimedAt => $composableBuilder(
+    column: $table.claimedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WeeklyQuestRewardClaimsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestRewardClaimsTable> {
+  $$WeeklyQuestRewardClaimsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get weekKey => $composableBuilder(
+    column: $table.weekKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rewardId => $composableBuilder(
+    column: $table.rewardId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rewardTitleSnapshot => $composableBuilder(
+    column: $table.rewardTitleSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get xpReward => $composableBuilder(
+    column: $table.xpReward,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get claimedAt => $composableBuilder(
+    column: $table.claimedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WeeklyQuestRewardClaimsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestRewardClaimsTable> {
+  $$WeeklyQuestRewardClaimsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get weekKey =>
+      $composableBuilder(column: $table.weekKey, builder: (column) => column);
+
+  GeneratedColumn<String> get rewardId =>
+      $composableBuilder(column: $table.rewardId, builder: (column) => column);
+
+  GeneratedColumn<String> get rewardTitleSnapshot => $composableBuilder(
+    column: $table.rewardTitleSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get xpReward =>
+      $composableBuilder(column: $table.xpReward, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get claimedAt =>
+      $composableBuilder(column: $table.claimedAt, builder: (column) => column);
+}
+
+class $$WeeklyQuestRewardClaimsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WeeklyQuestRewardClaimsTable,
+          WeeklyQuestRewardClaim,
+          $$WeeklyQuestRewardClaimsTableFilterComposer,
+          $$WeeklyQuestRewardClaimsTableOrderingComposer,
+          $$WeeklyQuestRewardClaimsTableAnnotationComposer,
+          $$WeeklyQuestRewardClaimsTableCreateCompanionBuilder,
+          $$WeeklyQuestRewardClaimsTableUpdateCompanionBuilder,
+          (
+            WeeklyQuestRewardClaim,
+            BaseReferences<
+              _$AppDatabase,
+              $WeeklyQuestRewardClaimsTable,
+              WeeklyQuestRewardClaim
+            >,
+          ),
+          WeeklyQuestRewardClaim,
+          PrefetchHooks Function()
+        > {
+  $$WeeklyQuestRewardClaimsTableTableManager(
+    _$AppDatabase db,
+    $WeeklyQuestRewardClaimsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeeklyQuestRewardClaimsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WeeklyQuestRewardClaimsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WeeklyQuestRewardClaimsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> weekKey = const Value.absent(),
+                Value<String> rewardId = const Value.absent(),
+                Value<String> rewardTitleSnapshot = const Value.absent(),
+                Value<int> xpReward = const Value.absent(),
+                Value<DateTime> claimedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WeeklyQuestRewardClaimsCompanion(
+                weekKey: weekKey,
+                rewardId: rewardId,
+                rewardTitleSnapshot: rewardTitleSnapshot,
+                xpReward: xpReward,
+                claimedAt: claimedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String weekKey,
+                required String rewardId,
+                required String rewardTitleSnapshot,
+                required int xpReward,
+                required DateTime claimedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WeeklyQuestRewardClaimsCompanion.insert(
+                weekKey: weekKey,
+                rewardId: rewardId,
+                rewardTitleSnapshot: rewardTitleSnapshot,
+                xpReward: xpReward,
+                claimedAt: claimedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WeeklyQuestRewardClaimsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WeeklyQuestRewardClaimsTable,
+      WeeklyQuestRewardClaim,
+      $$WeeklyQuestRewardClaimsTableFilterComposer,
+      $$WeeklyQuestRewardClaimsTableOrderingComposer,
+      $$WeeklyQuestRewardClaimsTableAnnotationComposer,
+      $$WeeklyQuestRewardClaimsTableCreateCompanionBuilder,
+      $$WeeklyQuestRewardClaimsTableUpdateCompanionBuilder,
+      (
+        WeeklyQuestRewardClaim,
+        BaseReferences<
+          _$AppDatabase,
+          $WeeklyQuestRewardClaimsTable,
+          WeeklyQuestRewardClaim
+        >,
+      ),
+      WeeklyQuestRewardClaim,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6724,4 +8950,13 @@ class $AppDatabaseManager {
       $$NutritionLogsTableTableManager(_db, _db.nutritionLogs);
   $$RpgProfileSettingsTableTableManager get rpgProfileSettings =>
       $$RpgProfileSettingsTableTableManager(_db, _db.rpgProfileSettings);
+  $$HealthDailySnapshotsTableTableManager get healthDailySnapshots =>
+      $$HealthDailySnapshotsTableTableManager(_db, _db.healthDailySnapshots);
+  $$DailyMissionClaimsTableTableManager get dailyMissionClaims =>
+      $$DailyMissionClaimsTableTableManager(_db, _db.dailyMissionClaims);
+  $$WeeklyQuestRewardClaimsTableTableManager get weeklyQuestRewardClaims =>
+      $$WeeklyQuestRewardClaimsTableTableManager(
+        _db,
+        _db.weeklyQuestRewardClaims,
+      );
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
+import '../../../health/presentation/providers/health_controller.dart';
 import '../../data/derived_rpg_repository.dart';
 import '../../domain/achievement.dart';
 import '../../domain/rpg_overview.dart';
@@ -12,22 +13,19 @@ import '../../domain/rpg_title.dart';
 /// Provider del repositorio RPG.
 ///
 /// ¿Qué hace?
-/// Inyecta la implementación derivada desde la base local.
+/// Inyecta la implementación derivada desde la base local
+/// y la integra con Health.
 ///
 /// ¿Para qué sirve?
 /// Para desacoplar la UI del cálculo real del sistema RPG.
 final rpgRepositoryProvider = Provider<RpgRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return DerivedRpgRepository(db);
+  final healthRepository = ref.watch(healthRepositoryProvider);
+
+  return DerivedRpgRepository(db, healthRepository: healthRepository);
 });
 
 /// Controlador principal del overview RPG.
-///
-/// ¿Qué hace?
-/// Carga el estado completo del personaje.
-///
-/// ¿Para qué sirve?
-/// Para que la UI sea declarativa y no implemente reglas del RPG.
 class RpgController extends AsyncNotifier<RpgOverview> {
   late final RpgRepository _repository;
 
@@ -48,36 +46,18 @@ final rpgControllerProvider = AsyncNotifierProvider<RpgController, RpgOverview>(
 );
 
 /// Provider de logros RPG.
-///
-/// ¿Qué hace?
-/// Carga los logros calculados del personaje.
-///
-/// ¿Para qué sirve?
-/// Para alimentar la pantalla de logros.
 final rpgAchievementsProvider = FutureProvider<List<Achievement>>((ref) {
   final repository = ref.watch(rpgRepositoryProvider);
   return repository.getAchievements();
 });
 
 /// Provider de títulos RPG.
-///
-/// ¿Qué hace?
-/// Carga los títulos, su estado desbloqueado y el título equipado.
-///
-/// ¿Para qué sirve?
-/// Para alimentar la pantalla de títulos.
 final rpgTitlesProvider = FutureProvider<List<RpgTitle>>((ref) {
   final repository = ref.watch(rpgRepositoryProvider);
   return repository.getTitles();
 });
 
 /// Controlador de acciones RPG.
-///
-/// ¿Qué hace?
-/// Ejecuta acciones como equipar un título.
-///
-/// ¿Para qué sirve?
-/// Para separar acciones mutables de la UI.
 class RpgActionController extends AsyncNotifier<void> {
   late final RpgRepository _repository;
 

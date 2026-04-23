@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/database/database_provider.dart';
 import '../../data/plugin_health_repository.dart';
 import '../../domain/health_overview.dart';
 import '../../domain/health_repository.dart';
@@ -9,12 +10,14 @@ import '../../domain/health_repository.dart';
 /// Provider del repositorio Health.
 ///
 /// ¿Qué hace?
-/// Inyecta la implementación basada en plugin.
+/// Inyecta la implementación basada en plugin + cache local.
 ///
 /// ¿Para qué sirve?
 /// Para desacoplar la UI de la implementación real.
 final healthRepositoryProvider = Provider<HealthRepository>((ref) {
-  return PluginHealthRepository();
+  final db = ref.watch(appDatabaseProvider);
+
+  return PluginHealthRepository(db);
 });
 
 /// Controlador principal del módulo Health.
