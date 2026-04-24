@@ -2,29 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/presentation/widgets/hunter_rank_badge.dart';
+import '../../../../shared/presentation/widgets/hunter_surface_card.dart';
 import '../../domain/rpg_overview.dart';
-import '../../domain/rpg_rank.dart';
 import '../../domain/rpg_stats.dart';
 import '../../domain/rpg_title.dart';
 import '../providers/rpg_controller.dart';
 
-/// Pantalla principal del sistema RPG.
+/// Pantalla STATS del cazador.
 ///
 /// ¿Qué hace?
-/// Muestra:
+/// Muestra progreso real del usuario:
 /// - rango
 /// - nivel
-/// - XP total
-/// - progreso al siguiente nivel
-/// - progreso al siguiente rango
-/// - racha global
-/// - desglose de XP por módulo
-/// - stats del personaje
-/// - título equipado
+/// - XP
+/// - racha
+/// - desglose por módulo
+/// - stats RPG
 ///
 /// ¿Para qué sirve?
-/// Para convertir la actividad real del usuario
-/// en progreso visible tipo videojuego.
+/// Para reemplazar visualmente "RPG" por una pantalla más clara tipo
+/// estadísticas del cazador.
 class RpgOverviewScreen extends ConsumerWidget {
   const RpgOverviewScreen({super.key});
 
@@ -34,7 +32,21 @@ class RpgOverviewScreen extends ConsumerWidget {
     final titlesAsync = ref.watch(rpgTitlesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hunter RPG')),
+      appBar: AppBar(
+        title: const Text('Stats'),
+        actions: [
+          IconButton(
+            tooltip: 'Logros',
+            onPressed: () => context.push('/rpg/achievements'),
+            icon: const Icon(Icons.workspace_premium_outlined),
+          ),
+          IconButton(
+            tooltip: 'Títulos',
+            onPressed: () => context.push('/rpg/titles'),
+            icon: const Icon(Icons.emoji_events_outlined),
+          ),
+        ],
+      ),
       body: overviewAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -55,18 +67,22 @@ class RpgOverviewScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                if (equippedTitle != null) ...[
-                  _EquippedTitleCard(title: equippedTitle),
-                  const SizedBox(height: 12),
-                ],
-                const _QuickActionsCard(),
-                const SizedBox(height: 12),
-                _RankCard(overview: overview),
-                const SizedBox(height: 12),
-                _LevelCard(overview: overview),
-                const SizedBox(height: 12),
-                _BreakdownCard(overview: overview),
-                const SizedBox(height: 12),
+                Text(
+                  'ESTADÍSTICAS DEL CAZADOR',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tu progreso real',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 18),
+                _RankHeroCard(overview: overview, title: equippedTitle),
+                const SizedBox(height: 14),
+                _QuickStatsGrid(overview: overview),
+                const SizedBox(height: 14),
+                _XpBreakdownCard(overview: overview),
+                const SizedBox(height: 14),
                 _StatsCard(stats: overview.stats),
               ],
             ),
@@ -78,227 +94,182 @@ class RpgOverviewScreen extends ConsumerWidget {
 
   RpgTitle? _findEquippedTitle(List<RpgTitle>? titles) {
     if (titles == null) return null;
-
     for (final title in titles) {
       if (title.isEquipped) return title;
     }
-
     return null;
   }
 }
 
-class _EquippedTitleCard extends StatelessWidget {
-  final RpgTitle title;
+class _RankHeroCard extends StatelessWidget {
+  final RpgOverview overview;
+  final RpgTitle? title;
 
-  const _EquippedTitleCard({required this.title});
+  const _RankHeroCard({required this.overview, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Text(
-              'TÍTULO EQUIPADO',
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title.name,
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(title.description, textAlign: TextAlign.center),
-          ],
-        ),
+    return HunterSurfaceCard(
+      highlighted: true,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _RankBox(rank: overview.rank.label),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HunterRankBadge(
+                      rankLabel: overview.rank.label,
+                      compact: true,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${overview.totalXp} XP acumulados',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    if (title != null) ...[
+                      const SizedBox(height: 6),
+                      Text(title!.name),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          LinearProgressIndicator(
+            value: overview.nextRank == null ? 1 : overview.rankProgress,
+            minHeight: 9,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            overview.nextRank == null
+                ? 'Rango máximo alcanzado'
+                : '${overview.xpIntoCurrentRank} / ${overview.xpForNextRank} XP para rango ${overview.nextRank!.label}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActionsCard extends StatelessWidget {
-  const _QuickActionsCard();
+class _RankBox extends StatelessWidget {
+  final String rank;
+
+  const _RankBox({required this.rank});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            FilledButton.icon(
-              onPressed: () => context.push('/missions'),
-              icon: const Icon(Icons.flag_outlined),
-              label: const Text('Misiones'),
-            ),
-            FilledButton.icon(
-              onPressed: () => context.push('/rpg/achievements'),
-              icon: const Icon(Icons.workspace_premium_outlined),
-              label: const Text('Logros'),
-            ),
-            FilledButton.icon(
-              onPressed: () => context.push('/rpg/titles'),
-              icon: const Icon(Icons.emoji_events_outlined),
-              label: const Text('Títulos'),
-            ),
-          ],
-        ),
+    return Container(
+      width: 76,
+      height: 76,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withOpacity(0.35)),
+      ),
+      child: Text(
+        rank,
+        style: Theme.of(
+          context,
+        ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900),
       ),
     );
   }
 }
 
-class _RankCard extends StatelessWidget {
+class _QuickStatsGrid extends StatelessWidget {
   final RpgOverview overview;
 
-  const _RankCard({required this.overview});
+  const _QuickStatsGrid({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    final rankColor = _colorForRank(overview.rank);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Text('RANGO ACTUAL', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Text(
-              overview.rank.label,
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: rankColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (overview.nextRank != null) ...[
-              LinearProgressIndicator(
-                value: overview.rankProgress,
-                minHeight: 10,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${overview.xpIntoCurrentRank} / ${overview.xpForNextRank} XP para rango ${overview.nextRank!.label}',
-                textAlign: TextAlign.center,
-              ),
-            ] else
-              const Text(
-                'Has alcanzado el rango máximo actual.',
-                textAlign: TextAlign.center,
-              ),
-          ],
+    return Row(
+      children: [
+        Expanded(
+          child: _MiniStatCard(
+            icon: Icons.trending_up_outlined,
+            value: '${overview.level}',
+            label: 'Nivel',
+          ),
         ),
-      ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MiniStatCard(
+            icon: Icons.local_fire_department_outlined,
+            value: '${overview.activeStreakDays}',
+            label: 'Racha',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MiniStatCard(
+            icon: Icons.bolt_outlined,
+            value: '${overview.totalXp}',
+            label: 'XP',
+          ),
+        ),
+      ],
     );
-  }
-
-  Color _colorForRank(RpgRank rank) {
-    switch (rank) {
-      case RpgRank.e:
-        return Colors.grey;
-      case RpgRank.d:
-        return Colors.green;
-      case RpgRank.c:
-        return Colors.lightBlue;
-      case RpgRank.b:
-        return Colors.blue;
-      case RpgRank.a:
-        return Colors.purple;
-      case RpgRank.s:
-        return Colors.orange;
-      case RpgRank.ss:
-        return Colors.deepOrange;
-      case RpgRank.sssPlus:
-        return Colors.red;
-    }
   }
 }
 
-class _LevelCard extends StatelessWidget {
-  final RpgOverview overview;
+class _MiniStatCard extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
 
-  const _LevelCard({required this.overview});
+  const _MiniStatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Nivel ${overview.level}',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text('XP total: ${overview.totalXp}'),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: overview.levelProgress,
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${overview.xpIntoCurrentLevel} / ${overview.xpForNextLevel} XP para el siguiente nivel',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Theme.of(context).colorScheme.primaryContainer,
-              ),
-              child: Text(
-                'Racha global: ${overview.activeStreakDays} día(s)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-          ],
-        ),
+    return HunterSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon),
+          const SizedBox(height: 12),
+          Text(value, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 4),
+          Text(label),
+        ],
       ),
     );
   }
 }
 
-class _BreakdownCard extends StatelessWidget {
+class _XpBreakdownCard extends StatelessWidget {
   final RpgOverview overview;
 
-  const _BreakdownCard({required this.overview});
+  const _XpBreakdownCard({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'XP por módulo',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            _XpRow(label: 'Hábitos', value: overview.breakdown.habitsXp),
-            const SizedBox(height: 8),
-            _XpRow(
-              label: 'Entrenamiento',
-              value: overview.breakdown.workoutsXp,
-            ),
-            const SizedBox(height: 8),
-            _XpRow(label: 'Nutrición', value: overview.breakdown.nutritionXp),
-            const SizedBox(height: 8),
-            _XpRow(label: 'Health', value: overview.breakdown.healthXp),
-            const SizedBox(height: 8),
-            _XpRow(label: 'Misiones', value: overview.breakdown.questsXp),
-          ],
-        ),
+    return HunterSurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('FUENTES DE XP', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          _XpRow(label: 'Hábitos', value: overview.breakdown.habitsXp),
+          _XpRow(label: 'Entrenamiento', value: overview.breakdown.workoutsXp),
+          _XpRow(label: 'Dieta', value: overview.breakdown.nutritionXp),
+          _XpRow(label: 'Health', value: overview.breakdown.healthXp),
+          _XpRow(label: 'Misiones', value: overview.breakdown.questsXp),
+        ],
       ),
     );
   }
@@ -312,11 +283,14 @@ class _XpRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        Text('$value XP'),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          Text('$value XP'),
+        ],
+      ),
     );
   }
 }
@@ -330,53 +304,39 @@ class _StatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxScale = stats.maxValue < 100 ? 100 : stats.maxValue;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Stats del personaje',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            _StatRow(
-              label: 'Strength',
-              value: stats.strength,
-              maxScale: maxScale,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Endurance',
-              value: stats.endurance,
-              maxScale: maxScale,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Discipline',
-              value: stats.discipline,
-              maxScale: maxScale,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Recovery',
-              value: stats.recovery,
-              maxScale: maxScale,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Balance',
-              value: stats.balance,
-              maxScale: maxScale,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Consistency',
-              value: stats.consistency,
-              maxScale: maxScale,
-            ),
-          ],
-        ),
+    return HunterSurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ATRIBUTOS', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          _StatRow(
+            label: 'Strength',
+            value: stats.strength,
+            maxScale: maxScale,
+          ),
+          _StatRow(
+            label: 'Endurance',
+            value: stats.endurance,
+            maxScale: maxScale,
+          ),
+          _StatRow(
+            label: 'Discipline',
+            value: stats.discipline,
+            maxScale: maxScale,
+          ),
+          _StatRow(
+            label: 'Recovery',
+            value: stats.recovery,
+            maxScale: maxScale,
+          ),
+          _StatRow(label: 'Balance', value: stats.balance, maxScale: maxScale),
+          _StatRow(
+            label: 'Consistency',
+            value: stats.consistency,
+            maxScale: maxScale,
+          ),
+        ],
       ),
     );
   }
@@ -397,17 +357,20 @@ class _StatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = maxScale <= 0 ? 0.0 : (value / maxScale).clamp(0.0, 1.0);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('$label: $value'),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: progress,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(999),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: $value'),
+          const SizedBox(height: 5),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ],
+      ),
     );
   }
 }
