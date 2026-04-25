@@ -1,12 +1,9 @@
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../shared/presentation/widgets/hunter_progress_panel.dart';
-import '../../../../shared/presentation/widgets/hunter_rank_badge.dart';
-import '../../../../shared/presentation/widgets/hunter_section_title.dart';
-import '../../../../shared/presentation/widgets/hunter_surface_card.dart';
-import '../../../../shared/providers/theme_provider.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../health/presentation/providers/health_controller.dart';
 import '../../../quests/presentation/providers/daily_mission_controller.dart';
@@ -14,60 +11,30 @@ import '../../../rpg/presentation/providers/rpg_controller.dart';
 import '../../domain/home_dashboard_overview.dart';
 import '../providers/home_dashboard_controller.dart';
 
-/// Pantalla principal premium.
+/// Pantalla Inicio estilo Hunter System.
 ///
 /// ¿Qué hace?
-/// Presenta un resumen real de:
-/// - identidad del jugador
-/// - progreso RPG
-/// - estado del día
-/// - accesos rápidos
+/// Muestra el resumen principal del usuario con estilo RPG:
+/// - rango actual
+/// - XP total
+/// - progreso real al siguiente rango
+/// - misiones del día
+/// - estadísticas rápidas
+/// - hábitos completados y pendientes hoy
 ///
 /// ¿Para qué sirve?
-/// Para convertir la Home en el centro de mando de toda la app.
+/// Para que el usuario vea su progreso diario desde una sola vista
+/// y pueda navegar rápido a los módulos principales.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
-    final themeMode = ref.watch(themeModeProvider);
     final dashboardAsync = ref.watch(homeDashboardControllerProvider);
     final user = authState.user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hunter System'),
-        actions: [
-          IconButton(
-            tooltip: 'Perfil del cazador',
-            onPressed: () => context.push('/profile'),
-            icon: const Icon(Icons.person_outline),
-          ),
-          IconButton(
-            tooltip: 'Cambiar tema',
-            onPressed: () {
-              ref.read(themeModeProvider.notifier).toggleTheme();
-            },
-            icon: Icon(
-              themeMode == ThemeMode.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Cerrar sesión',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
       body: dashboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -85,48 +52,32 @@ class HomeScreen extends ConsumerWidget {
               ref.invalidate(rpgAchievementsProvider);
               ref.invalidate(rpgTitlesProvider);
               ref.invalidate(healthControllerProvider);
+
               await ref.read(homeDashboardControllerProvider.notifier).reload();
             },
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
               children: [
-                _HeroCard(
-                  playerName: user?.name ?? 'Jugador',
-                  email: user?.email ?? 'Sin correo',
-                  overview: overview,
+                _Header(name: user?.name ?? 'Cazador', overview: overview),
+                const SizedBox(height: 22),
+                _Tappable(
+                  onTap: () => context.push('/stats'),
+                  child: _RankProgressCard(overview: overview),
                 ),
-                const SizedBox(height: 16),
-                const HunterSectionTitle(
-                  title: 'Prioridad actual',
-                  subtitle: 'Lo más rentable que puedes hacer ahora',
-                  icon: Icons.track_changes_outlined,
+                const SizedBox(height: 22),
+                _Tappable(
+                  onTap: () => context.push('/missions'),
+                  child: _MissionCard(overview: overview),
                 ),
-                const SizedBox(height: 10),
-                _PriorityCard(message: overview.focusMessage),
-                const SizedBox(height: 16),
-                const HunterSectionTitle(
-                  title: 'Acciones rápidas',
-                  subtitle: 'Navegación central del sistema',
-                  icon: Icons.dashboard_customize_outlined,
+                const SizedBox(height: 24),
+                const _SectionLabel('ESTADÍSTICAS RÁPIDAS'),
+                const SizedBox(height: 12),
+                _QuickStats(overview: overview),
+                const SizedBox(height: 24),
+                _Tappable(
+                  onTap: () => context.push('/habits'),
+                  child: _HabitsCard(overview: overview),
                 ),
-                const SizedBox(height: 10),
-                const _QuickActionsCard(),
-                const SizedBox(height: 16),
-                const HunterSectionTitle(
-                  title: 'Tablero de hoy',
-                  subtitle: 'Estado actual de tus quests diarias',
-                  icon: Icons.flag_outlined,
-                ),
-                const SizedBox(height: 10),
-                _MissionProgressCard(overview: overview),
-                const SizedBox(height: 16),
-                const HunterSectionTitle(
-                  title: 'Actividad del día',
-                  subtitle: 'Resumen real de tus módulos principales',
-                  icon: Icons.auto_graph_outlined,
-                ),
-                const SizedBox(height: 10),
-                _ActivityGrid(overview: overview),
               ],
             ),
           );
@@ -136,303 +87,458 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  final String playerName;
-  final String email;
+class _Header extends StatelessWidget {
+  final String name;
   final HomeDashboardOverview overview;
 
-  const _HeroCard({
-    required this.playerName,
-    required this.email,
-    required this.overview,
-  });
+  const _Header({required this.name, required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return HunterSurfaceCard(
-      highlighted: true,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const CircleAvatar(
-            radius: 30,
-            child: Icon(Icons.shield_moon_outlined),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            playerName,
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(email, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          HunterRankBadge(rankLabel: overview.rankLabel),
-          if (overview.hasEquippedTitle) ...[
-            const SizedBox(height: 14),
-            Text(
-              overview.equippedTitleName!,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            if (overview.equippedTitleDescription != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                overview.equippedTitleDescription!,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            alignment: WrapAlignment.center,
+    return Row(
+      children: [
+        _RankAvatar(rank: overview.rankLabel),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HeroChip(label: 'Nivel ${overview.level}'),
-              _HeroChip(label: '${overview.totalXp} XP'),
-              _HeroChip(label: 'Racha ${overview.activeStreakDays}'),
+              const _SectionLabel('BIENVENIDO, CAZADOR'),
+              const SizedBox(height: 6),
+              Text(
+                name.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              if (overview.hasEquippedTitle) ...[
+                const SizedBox(height: 4),
+                Text(
+                  overview.equippedTitleName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        _XpPill(xp: overview.totalXp),
+      ],
     );
   }
 }
 
-class _HeroChip extends StatelessWidget {
-  final String label;
+class _RankAvatar extends StatelessWidget {
+  final String rank;
 
-  const _HeroChip({required this.label});
+  const _RankAvatar({required this.rank});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: 74,
+      height: 74,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: Theme.of(context).colorScheme.surface.withOpacity(0.65),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.45), width: 1.5),
+      ),
+      child: Text(rank, style: Theme.of(context).textTheme.headlineLarge),
+    );
+  }
+}
+
+class _XpPill extends StatelessWidget {
+  final int xp;
+
+  const _XpPill({required this.xp});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFF121827),
+        border: Border.all(color: const Color(0xFF55C8FF).withOpacity(0.25)),
+      ),
+      child: Text(
+        '⚡ $xp XP',
+        style: const TextStyle(
+          color: Color(0xFFFFD93D),
+          fontWeight: FontWeight.w900,
         ),
       ),
-      child: Text(label),
     );
   }
 }
 
-class _PriorityCard extends StatelessWidget {
-  final String message;
+class _RankProgressCard extends StatelessWidget {
+  final HomeDashboardOverview overview;
 
-  const _PriorityCard({required this.message});
+  const _RankProgressCard({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return HunterSurfaceCard(
-      child: Row(
+    final progress = overview.rankProgress;
+
+    final progressText = overview.nextRankLabel == null
+        ? 'Rango máximo alcanzado'
+        : '${overview.xpIntoCurrentRank} / ${overview.xpForNextRank} XP para rango ${overview.nextRankLabel}';
+
+    return _Panel(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.bolt_outlined),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message)),
+          Row(
+            children: [
+              const _SectionLabel('PROGRESO DE RANGO'),
+              const Spacer(),
+              Text(
+                'Rango ${overview.rankLabel}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 9,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          const SizedBox(height: 12),
+          Text(progressText, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
   }
 }
 
-class _QuickActionsCard extends StatelessWidget {
-  const _QuickActionsCard();
+class _MissionCard extends StatelessWidget {
+  final HomeDashboardOverview overview;
+
+  const _MissionCard({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return HunterSurfaceCard(
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+    final items = overview.todayMissionItems;
+
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FilledButton.icon(
-            onPressed: () => context.push('/profile'),
-            icon: const Icon(Icons.person_outline),
-            label: const Text('Perfil'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/missions'),
-            icon: const Icon(Icons.flag_outlined),
-            label: const Text('Misiones'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/rpg'),
-            icon: const Icon(Icons.auto_graph_outlined),
-            label: const Text('RPG'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/workouts'),
-            icon: const Icon(Icons.fitness_center),
-            label: const Text('Entrenar'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/nutrition'),
-            icon: const Icon(Icons.restaurant_outlined),
-            label: const Text('Nutrición'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/health'),
-            icon: const Icon(Icons.health_and_safety_outlined),
-            label: const Text('Health'),
-          ),
-          FilledButton.icon(
-            onPressed: () => context.push('/system/diagnostics'),
-            icon: const Icon(Icons.monitor_heart_outlined),
-            label: const Text('Diagnóstico'),
-          ),
+          const _SectionLabel('MISIÓN DE HOY'),
+          const SizedBox(height: 18),
+          if (items.isEmpty)
+            Text(
+              'No hay misiones disponibles hoy.',
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      _iconFor(item.iconKey),
+                      color: item.isDone
+                          ? const Color(0xFF55C8FF)
+                          : const Color(0xFF8C7CFF),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _SmallXp(xp: item.xpReward),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-class _MissionProgressCard extends StatelessWidget {
+class _QuickStats extends StatelessWidget {
   final HomeDashboardOverview overview;
 
-  const _MissionProgressCard({required this.overview});
+  const _QuickStats({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return HunterProgressPanel(
-      title: 'Misiones del día',
-      value:
-          '${overview.completedTodayMissions} / ${overview.totalTodayMissions}',
-      subtitle:
-          'Reclamables: ${overview.claimableTodayMissions} | Reclamadas: ${overview.claimedTodayMissions} | XP: ${overview.claimedTodayMissionXp}',
-      progress: overview.missionProgress,
-      icon: Icons.flag_outlined,
-      highlighted: true,
+    return Row(
+      children: [
+        Expanded(
+          child: _Tappable(
+            onTap: () => context.push('/stats'),
+            child: _MiniCard(
+              icon: Icons.local_fire_department,
+              value: '${overview.activeStreakDays}',
+              label: 'Racha',
+              subLabel: 'días',
+              color: Colors.redAccent,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _Tappable(
+            onTap: () => context.push('/workouts'),
+            child: _MiniCard(
+              icon: Icons.fitness_center,
+              value: '${overview.finishedWorkoutsToday}',
+              label: 'Entrenos',
+              subLabel: 'hoy',
+              color: const Color(0xFF55C8FF),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _Tappable(
+            onTap: () => context.push('/missions'),
+            child: _MiniCard(
+              icon: Icons.flag,
+              value: '${overview.claimedTodayMissions}',
+              label: 'Quests',
+              subLabel: 'reclamadas',
+              color: const Color(0xFF8C7CFF),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _ActivityGrid extends StatelessWidget {
+class _HabitsCard extends StatelessWidget {
   final HomeDashboardOverview overview;
 
-  const _ActivityGrid({required this.overview});
+  const _HabitsCard({required this.overview});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 700;
-        final itemWidth = wide
-            ? (constraints.maxWidth - 12) / 2
-            : constraints.maxWidth;
+    final items = overview.todayHabitItems;
 
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            SizedBox(
-              width: itemWidth,
-              child: _MetricCard(
-                title: 'Hábitos',
-                value: '${overview.completedHabitsToday}',
-                subtitle: 'completados hoy',
-                icon: Icons.local_fire_department_outlined,
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionLabel('HÁBITOS DE HOY'),
+          const SizedBox(height: 16),
+          if (items.isEmpty)
+            Text(
+              'Completa hábitos para verlos aquí.',
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      item.isDone
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: item.isDone
+                          ? const Color(0xFF55C8FF)
+                          : const Color(0xFF4E4D73),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (item.xpReward > 0) ...[
+                      const SizedBox(width: 10),
+                      _SmallXp(xp: item.xpReward),
+                    ],
+                  ],
+                ),
               ),
             ),
-            SizedBox(
-              width: itemWidth,
-              child: _MetricCard(
-                title: 'Entrenamiento',
-                value: '${overview.finishedWorkoutsToday}',
-                subtitle: 'sesión(es) finalizada(s)',
-                icon: Icons.fitness_center,
-              ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: _MetricCard(
-                title: 'Nutrición',
-                value: '${overview.nutritionLogsToday}',
-                subtitle: 'registro(s) hoy',
-                icon: Icons.restaurant_outlined,
-              ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: HunterProgressPanel(
-                title: 'Pasos',
-                value: '${overview.stepsToday}',
-                subtitle: overview.isHealthSupported
-                    ? overview.hasHealthPermissions
-                          ? '${overview.stepsToday} / ${overview.stepGoal}'
-                          : 'Faltan permisos de Health'
-                    : 'Health no disponible',
-                progress:
-                    overview.isHealthSupported && overview.hasHealthPermissions
-                    ? overview.stepsProgress
-                    : 0.0,
-                icon: Icons.directions_walk,
-              ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: HunterProgressPanel(
-                title: 'Sueño',
-                value: '${overview.sleepHours.toStringAsFixed(1)} h',
-                subtitle: overview.isHealthSupported
-                    ? overview.hasHealthPermissions
-                          ? '${overview.sleepMinutesToday} / ${overview.sleepGoalMinutes} min'
-                          : 'Faltan permisos de Health'
-                    : 'Health no disponible',
-                progress:
-                    overview.isHealthSupported && overview.hasHealthPermissions
-                    ? overview.sleepProgress
-                    : 0.0,
-                icon: Icons.bedtime_outlined,
-              ),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String subtitle;
+class _MiniCard extends StatelessWidget {
   final IconData icon;
+  final String value;
+  final String label;
+  final String subLabel;
+  final Color color;
 
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
+  const _MiniCard({
     required this.icon,
+    required this.value,
+    required this.label,
+    required this.subLabel,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    return HunterSurfaceCard(
+    return _Panel(
+      padding: const EdgeInsets.all(14),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
+          Icon(icon, color: color),
+          const SizedBox(height: 16),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: color),
           ),
           const SizedBox(height: 4),
-          Text(subtitle, textAlign: TextAlign.center),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            subLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const _Panel({required this.child, this.padding = const EdgeInsets.all(18)});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: const Color(0xFF181827),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SmallXp extends StatelessWidget {
+  final int xp;
+
+  const _SmallXp({required this.xp});
+
+  @override
+  Widget build(BuildContext context) {
+    if (xp <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF163047),
+      ),
+      child: Text(
+        '+$xp XP',
+        style: const TextStyle(
+          color: Color(0xFF55C8FF),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: Theme.of(context).textTheme.labelLarge);
+  }
+}
+
+class _Tappable extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _Tappable({required this.child, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: child,
+      ),
+    );
+  }
+}
+
+IconData _iconFor(String key) {
+  switch (key) {
+    case 'training':
+      return Icons.fitness_center;
+    case 'nutrition':
+      return Icons.restaurant;
+    case 'recovery':
+      return Icons.bedtime_outlined;
+    case 'appearance':
+      return Icons.auto_awesome;
+    case 'discipline':
+      return Icons.psychology_alt_outlined;
+    case 'habit':
+      return Icons.check_circle_outline;
+    default:
+      return Icons.bolt_outlined;
   }
 }

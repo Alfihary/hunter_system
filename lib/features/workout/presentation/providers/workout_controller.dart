@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
+import '../../../home/presentation/providers/home_dashboard_controller.dart';
+import '../../../rpg/presentation/providers/rpg_controller.dart';
 import '../../data/drift_workout_repository.dart';
 import '../../domain/exercise_last_session_summary.dart';
 import '../../domain/routine_exercise_input.dart';
@@ -16,12 +18,29 @@ import '../../domain/workout_set_type.dart';
 ///
 /// ¿Qué hace?
 /// Expone la implementación Drift como contrato abstracto.
+///
+/// ¿Para qué sirve?
+/// Permite que la capa de presentación use el módulo workout
+/// sin depender directamente de Drift.
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return DriftWorkoutRepository(db);
 });
 
-/// Controlador principal del listado de rutinas.
+/// Controlador principal del módulo de entrenamiento.
+///
+/// ¿Qué hace?
+/// Administra:
+/// - listado de rutinas
+/// - creación de rutinas
+/// - eliminación de rutinas
+/// - inicio de entrenamiento
+/// - guardado de sets
+/// - finalización de entrenamiento
+///
+/// ¿Para qué sirve?
+/// Centraliza las acciones del módulo workout y refresca los módulos
+/// conectados como Home y Stats.
 class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
   late final WorkoutRepository _repository;
 
@@ -55,6 +74,7 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
     try {
       await _repository.deleteRoutine(routineId);
       await reload();
+      _refreshConnectedSystems();
       return null;
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
@@ -62,8 +82,12 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
     }
   }
 
-  Future<String> startWorkout(String routineId) {
-    return _repository.startWorkout(routineId);
+  Future<String> startWorkout(String routineId) async {
+    final workoutId = await _repository.startWorkout(routineId);
+
+    _refreshConnectedSystems();
+
+    return workoutId;
   }
 
   Future<String?> addWorkoutSet({
@@ -85,6 +109,12 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
         durationSeconds: durationSeconds,
         weight: weight,
       );
+
+      /// El XP no se duplica aquí.
+      /// El RPG calcula XP desde los sets guardados en base de datos.
+      /// Aquí sólo refrescamos las pantallas conectadas.
+      _refreshConnectedSystems();
+
       return null;
     } catch (e) {
       return e.toString();
@@ -94,6 +124,11 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
   Future<String?> finishWorkout(String workoutId) async {
     try {
       await _repository.finishWorkout(workoutId);
+
+      ref.invalidate(completedWorkoutsProvider);
+      ref.invalidate(workoutHistoryDetailProvider(workoutId));
+      _refreshConnectedSystems();
+
       return null;
     } catch (e) {
       return e.toString();
@@ -103,6 +138,24 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
   Future<void> reload() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_repository.getRoutineSummaries);
+  }
+
+  /// Refresca módulos derivados del entrenamiento.
+  ///
+  /// ¿Qué hace?
+  /// Invalida providers que dependen de los datos de entrenamiento:
+  /// - Home
+  /// - Stats/RPG
+  /// - Logros
+  /// - Títulos
+  ///
+  /// ¿Para qué sirve?
+  /// Para que al guardar sets o finalizar sesión el progreso se vea reflejado.
+  void _refreshConnectedSystems() {
+    ref.invalidate(homeDashboardControllerProvider);
+    ref.invalidate(rpgControllerProvider);
+    ref.invalidate(rpgAchievementsProvider);
+    ref.invalidate(rpgTitlesProvider);
   }
 }
 

@@ -20,10 +20,11 @@ import '../providers/workout_controller.dart';
 /// - muestra contador actual/meta
 /// - muestra comparación contra la última sesión
 /// - controla un descanso global
+/// - muestra feedback visual de XP estimado al guardar sets
 ///
 /// ¿Para qué sirve?
-/// Para que el usuario registre su entrenamiento con contexto real:
-/// no sólo qué hace hoy, sino también contra qué está comparando.
+/// Para que el usuario registre su entrenamiento con contexto real,
+/// sin duplicar XP, porque el RPG calcula XP desde los sets guardados.
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
   final String routineId;
 
@@ -124,6 +125,22 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     Navigator.of(context).pop();
   }
 
+  /// Calcula XP estimado para feedback visual.
+  ///
+  /// Importante:
+  /// Esto NO suma XP directamente.
+  /// El XP real lo calcula el RPG desde la base de datos.
+  int _estimatedSetXp(WorkoutSetType setType) {
+    switch (setType) {
+      case WorkoutSetType.normal:
+        return 10;
+      case WorkoutSetType.dropSet:
+        return 15;
+      case WorkoutSetType.isometric:
+        return 18;
+    }
+  }
+
   /// Inicia el cronómetro global de descanso.
   void _startRestTimer(int seconds) {
     _restTimer?.cancel();
@@ -161,6 +178,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     });
   }
 
+  /// Pausa o reanuda el cronómetro actual.
   void _togglePauseResumeTimer() {
     if (_restSecondsRemaining <= 0) return;
 
@@ -199,6 +217,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     setState(() {});
   }
 
+  /// Reinicia el cronómetro de descanso.
   void _resetRestTimer() {
     _restTimer?.cancel();
 
@@ -207,6 +226,16 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     });
   }
 
+  /// Guarda una serie inline.
+  ///
+  /// ¿Qué hace?
+  /// - valida que exista sesión activa
+  /// - manda el set al controller
+  /// - inicia descanso automático
+  /// - muestra XP estimado visual
+  ///
+  /// ¿Para qué sirve?
+  /// Para registrar sets con feedback inmediato sin alterar el cálculo real RPG.
   Future<String?> _saveInlineSet({
     required RoutineExerciseInput exercise,
     required WorkoutSetType setType,
@@ -232,6 +261,16 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
     if (error == null) {
       _startRestTimer(_selectedRestPreset);
+
+      final estimatedXp = _estimatedSetXp(setType);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('+$estimatedXp XP estimados · Set registrado'),
+          ),
+        );
+      }
     }
 
     return error;
@@ -247,7 +286,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sesión')),
+      appBar: AppBar(title: const Text('Entrenamiento activo')),
       body: routineAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
@@ -377,6 +416,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 }
 
 /// Panel superior compacto.
+///
+/// ¿Qué hace?
+/// Muestra:
+/// - nombre de rutina
+/// - sets totales
+/// - cronómetro global
+/// - presets de descanso
+/// - iniciar/finalizar sesión
 class _CompactTopPanel extends StatelessWidget {
   final String routineName;
   final int totalSets;
@@ -605,6 +652,7 @@ class _WorkoutBlockTabs extends StatelessWidget {
 /// - progreso actual/meta
 /// - historial del día
 /// - comparación contra la última sesión
+/// - registro inline de normal/drop/isométrico
 class _ExerciseSessionCard extends ConsumerStatefulWidget {
   final RoutineExerciseInput exercise;
   final List<WorkoutSetEntry> sets;
@@ -771,7 +819,6 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
             ),
             const SizedBox(height: 10),
 
-            /// Resumen de la última sesión.
             if (widget.previousSummary != null)
               _PreviousSessionPanel(summary: widget.previousSummary!),
 
@@ -881,13 +928,6 @@ class _ExerciseSessionCardState extends ConsumerState<_ExerciseSessionCard> {
 }
 
 /// Panel de resumen de la última sesión.
-///
-/// ¿Qué hace?
-/// Muestra de forma compacta:
-/// - total de series anteriores
-/// - mejor set anterior
-/// - peso máximo anterior
-/// - fecha de esa sesión
 class _PreviousSessionPanel extends StatelessWidget {
   final ExerciseLastSessionSummary summary;
 

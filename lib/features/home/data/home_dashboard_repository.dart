@@ -7,19 +7,6 @@ import '../../rpg/domain/rpg_repository.dart';
 import '../domain/home_dashboard_overview.dart';
 
 /// Repositorio del dashboard principal.
-///
-/// ¿Qué hace?
-/// Consulta y combina información de varios módulos:
-/// - hábitos
-/// - entrenamiento
-/// - nutrición
-/// - health
-/// - misiones
-/// - RPG
-///
-/// ¿Para qué sirve?
-/// Para centralizar la lógica del Home premium en un solo lugar
-/// y mantener la UI limpia.
 class HomeDashboardRepository {
   final AppDatabase db;
   final RpgRepository rpgRepository;
@@ -33,12 +20,15 @@ class HomeDashboardRepository {
     required this.healthRepository,
   });
 
-  /// Obtiene el resumen completo del dashboard Home.
   Future<HomeDashboardOverview> getOverview() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
     final todayKey = _dateKey(today);
+
+    final habits = await (db.select(
+      db.habits,
+    )..where((table) => table.isActive.equals(true))).get();
 
     final habitLogsToday = await (db.select(
       db.habitLogs,
@@ -83,10 +73,13 @@ class HomeDashboardRepository {
       sleepMinutesToday = healthOverview.sleep.totalMinutesAsleep;
       sleepGoalMinutes = healthOverview.sleep.goalSleepMinutes;
     } catch (_) {
-      /// No rompemos Home si Health falla.
       isHealthSupported = false;
       hasHealthPermissions = false;
     }
+
+    final completedHabitIdsToday = habitLogsToday
+        .map((log) => log.habitId)
+        .toSet();
 
     final completedTodayMissions = missions
         .where((mission) => mission.isCompleted)
@@ -104,12 +97,55 @@ class HomeDashboardRepository {
         .where((mission) => mission.isClaimed)
         .fold<int>(0, (sum, mission) => sum + mission.xpReward);
 
+    final todayMissionItems = missions.take(4).map((mission) {
+      return HomeDashboardItem(
+        title: mission.title,
+        subtitle: mission.isClaimed
+            ? 'Reclamada'
+            : mission.canClaim
+            ? 'Lista para reclamar'
+            : mission.isCompleted
+            ? 'Completada'
+            : 'En progreso',
+        xpReward: mission.xpReward,
+        isDone: mission.isCompleted || mission.isClaimed,
+        iconKey: mission.category.name,
+      );
+    }).toList();
+
+    final sortedHabits = [...habits]
+      ..sort((a, b) {
+        final aDone = completedHabitIdsToday.contains(a.id);
+        final bDone = completedHabitIdsToday.contains(b.id);
+
+        if (aDone != bDone) {
+          return aDone ? -1 : 1;
+        }
+
+        return a.name.compareTo(b.name);
+      });
+
+    final todayHabitItems = sortedHabits.take(5).map((habit) {
+      final isDone = completedHabitIdsToday.contains(habit.id);
+
+      return HomeDashboardItem(
+        title: habit.name,
+        subtitle: isDone ? 'Completado hoy' : habit.category,
+        xpReward: habit.xpReward,
+        isDone: isDone,
+        iconKey: 'habit',
+      );
+    }).toList();
+
     return HomeDashboardOverview(
       generatedAt: now,
       rankLabel: rpgOverview.rank.label,
       level: rpgOverview.level,
       totalXp: rpgOverview.totalXp,
       activeStreakDays: rpgOverview.activeStreakDays,
+      xpIntoCurrentRank: rpgOverview.xpIntoCurrentRank,
+      xpForNextRank: rpgOverview.xpForNextRank,
+      nextRankLabel: rpgOverview.nextRank?.label,
       equippedTitleName: equipped?.name,
       equippedTitleDescription: equipped?.description,
       totalTodayMissions: missions.length,
@@ -141,16 +177,11 @@ class HomeDashboardRepository {
         isHealthSupported: isHealthSupported,
         hasHealthPermissions: hasHealthPermissions,
       ),
+      todayMissionItems: todayMissionItems,
+      todayHabitItems: todayHabitItems,
     );
   }
 
-  /// Genera un mensaje de prioridad automática para el día.
-  ///
-  /// ¿Qué hace?
-  /// Detecta la necesidad más clara del sistema actual.
-  ///
-  /// ¿Para qué sirve?
-  /// Para que el usuario sepa cuál debería ser su siguiente acción.
   String _buildFocusMessage({
     required int claimableTodayMissions,
     required int completedTodayMissions,
@@ -189,7 +220,6 @@ class HomeDashboardRepository {
     return 'Buen avance hoy. Consolida el tablero y sigue sumando XP real.';
   }
 
-  /// Convierte fecha a YYYY-MM-DD.
   String _dateKey(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');
