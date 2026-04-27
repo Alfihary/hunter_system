@@ -97,4 +97,3 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 dependency_overrides:
-  source_gen: ^4.2.2

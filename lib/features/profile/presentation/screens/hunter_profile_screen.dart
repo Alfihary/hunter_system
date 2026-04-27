@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/theme/app_theme_preset.dart';
 import '../../../../features/auth/presentation/providers/auth_controller.dart';
 import '../../../../features/health/presentation/providers/health_controller.dart';
 import '../../../../features/profile/domain/hunter_profile_overview.dart';
@@ -9,29 +10,132 @@ import '../../../../features/profile/presentation/providers/hunter_profile_contr
 import '../../../../features/quests/presentation/providers/daily_mission_controller.dart';
 import '../../../../features/rpg/domain/rpg_stats.dart';
 import '../../../../features/rpg/presentation/providers/rpg_controller.dart';
+import '../../../../shared/providers/theme_provider.dart';
 
 /// Pantalla del perfil del cazador.
 ///
 /// ¿Qué hace?
-/// Muestra:
-/// - identidad del jugador
-/// - título equipado
-/// - rango y nivel
-/// - stats completos
-/// - progreso semanal
-/// - estado Health
-/// - logros destacados
-/// - conteos globales
-///
-/// ¿Para qué sirve?
-/// Para concentrar la identidad y progreso del usuario en una sola vista.
+/// Muestra identidad, progreso, seguridad, configuración,
+/// selector de tema RPG, health, stats, logros y registros globales.
 class HunterProfileScreen extends ConsumerWidget {
   const HunterProfileScreen({super.key});
+
+  Future<void> _showChangePasswordDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Cambiar contraseña'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña actual',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: newController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nueva contraseña',
+                    helperText: 'Mínimo 8 caracteres, una letra y un número.',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: confirmController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirmar nueva contraseña',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final currentPassword = currentController.text.trim();
+                final newPassword = newController.text.trim();
+                final confirmPassword = confirmController.text.trim();
+
+                if (currentPassword.isEmpty ||
+                    newPassword.isEmpty ||
+                    confirmPassword.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Completa todos los campos.')),
+                  );
+                  return;
+                }
+
+                if (newPassword != confirmPassword) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Las contraseñas no coinciden.')),
+                  );
+                  return;
+                }
+
+                final success = await ref
+                    .read(authControllerProvider.notifier)
+                    .changePassword(
+                      currentPassword: currentPassword,
+                      newPassword: newPassword,
+                    );
+
+                if (!context.mounted) return;
+
+                if (success) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Contraseña actualizada correctamente.'),
+                    ),
+                  );
+                } else {
+                  final error = ref.read(authControllerProvider).errorMessage;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error ?? 'No se pudo cambiar la contraseña.',
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    currentController.dispose();
+    newController.dispose();
+    confirmController.dispose();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
     final overviewAsync = ref.watch(hunterProfileControllerProvider);
+    final themeState = ref.watch(themeProvider);
+    final themeController = ref.read(themeProvider.notifier);
     final user = authState.user;
 
     return Scaffold(
@@ -64,6 +168,23 @@ class HunterProfileScreen extends ConsumerWidget {
                   overview: overview,
                 ),
                 const SizedBox(height: 12),
+                _SettingsCard(
+                  isDarkMode: themeState.isDarkMode,
+                  selectedPreset: themeState.preset,
+                  onToggleTheme: (_) => themeController.toggleThemeMode(),
+                  onSelectPreset: themeController.setPreset,
+                  onChangePassword: () {
+                    _showChangePasswordDialog(context, ref);
+                  },
+                  onLogout: () async {
+                    await ref.read(authControllerProvider.notifier).logout();
+
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
                 const _QuickActionsCard(),
                 const SizedBox(height: 12),
                 _WeeklyBoardCard(overview: overview),
@@ -79,6 +200,85 @@ class HunterProfileScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final bool isDarkMode;
+  final AppThemePreset selectedPreset;
+  final ValueChanged<bool> onToggleTheme;
+  final ValueChanged<AppThemePreset> onSelectPreset;
+  final VoidCallback onChangePassword;
+  final Future<void> Function() onLogout;
+
+  const _SettingsCard({
+    required this.isDarkMode,
+    required this.selectedPreset,
+    required this.onToggleTheme,
+    required this.onSelectPreset,
+    required this.onChangePassword,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            Text(
+              'Configuración',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              value: isDarkMode,
+              onChanged: onToggleTheme,
+              title: const Text('Modo oscuro'),
+              subtitle: const Text('Tema visual de la aplicación'),
+              secondary: const Icon(Icons.dark_mode_outlined),
+            ),
+            const Divider(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Tema RPG',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...AppThemePreset.values.map(
+              (preset) => RadioListTile<AppThemePreset>(
+                value: preset,
+                groupValue: selectedPreset,
+                onChanged: (value) {
+                  if (value != null) {
+                    onSelectPreset(value);
+                  }
+                },
+                title: Text(preset.label),
+                subtitle: Text(preset.description),
+                secondary: Icon(Icons.circle, color: preset.primaryColor),
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.lock_reset_outlined),
+              title: const Text('Cambiar contraseña'),
+              subtitle: const Text('Actualiza tu acceso local'),
+              onTap: onChangePassword,
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Cerrar sesión'),
+              onTap: onLogout,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -179,9 +379,9 @@ class _QuickActionsCard extends StatelessWidget {
           runSpacing: 10,
           children: [
             FilledButton.icon(
-              onPressed: () => context.push('/rpg'),
+              onPressed: () => context.push('/stats'),
               icon: const Icon(Icons.auto_graph_outlined),
-              label: const Text('RPG'),
+              label: const Text('Stats'),
             ),
             FilledButton.icon(
               onPressed: () => context.push('/missions'),
@@ -269,17 +469,17 @@ class _HealthProfileCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            if (!supported) ...[
+            if (!supported)
               const Text(
                 'Health no está disponible en esta plataforma.',
                 textAlign: TextAlign.center,
-              ),
-            ] else if (!permissions) ...[
+              )
+            else if (!permissions)
               const Text(
                 'Health está disponible, pero faltan permisos.',
                 textAlign: TextAlign.center,
-              ),
-            ] else ...[
+              )
+            else ...[
               _MetricProgressRow(
                 label: 'Pasos',
                 value: '${overview.stepsToday}',

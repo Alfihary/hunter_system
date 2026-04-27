@@ -7,7 +7,7 @@ import '../domain/auth_repository.dart';
 /// Objetivo:
 /// - Enseñar flujo de auth sin backend.
 /// - Permitir register/login/logout.
-/// - Mantener sesión sólo en memoria mientras la app está abierta.
+/// - Permitir cambio de contraseña en memoria.
 ///
 /// Limitaciones de esta fase:
 /// - No persiste datos al cerrar la app.
@@ -30,15 +30,28 @@ class LocalAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
+    final cleanName = name.trim();
+    final cleanEmail = email.trim().toLowerCase();
+
+    if (cleanName.length < 2) {
+      throw AuthException('El nombre debe tener al menos 2 caracteres.');
+    }
+
+    if (!_isValidEmail(cleanEmail)) {
+      throw AuthException('Ingresa un correo válido.');
+    }
+
+    _validatePasswordStrength(password);
+
     if (_registeredUser != null &&
-        _registeredUser!.email.toLowerCase() == email.toLowerCase()) {
+        _registeredUser!.email.toLowerCase() == cleanEmail) {
       throw AuthException('Ya existe una cuenta con ese correo.');
     }
 
     final user = AppUser(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name.trim(),
-      email: email.trim(),
+      name: cleanName,
+      email: cleanEmail,
     );
 
     _registeredUser = user;
@@ -55,12 +68,13 @@ class LocalAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
 
+    final cleanEmail = email.trim().toLowerCase();
+
     if (_registeredUser == null || _registeredPassword == null) {
       throw AuthException('Primero debes registrar una cuenta.');
     }
 
-    final emailMatches =
-        _registeredUser!.email.toLowerCase() == email.trim().toLowerCase();
+    final emailMatches = _registeredUser!.email.toLowerCase() == cleanEmail;
     final passwordMatches = _registeredPassword == password;
 
     if (!emailMatches || !passwordMatches) {
@@ -72,8 +86,59 @@ class LocalAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (_sessionUser == null) {
+      throw AuthException('Debes iniciar sesión para cambiar tu contraseña.');
+    }
+
+    if (_registeredPassword == null) {
+      throw AuthException('No hay contraseña registrada.');
+    }
+
+    if (_registeredPassword != currentPassword) {
+      throw AuthException('La contraseña actual no es correcta.');
+    }
+
+    if (currentPassword == newPassword) {
+      throw AuthException('La nueva contraseña debe ser diferente.');
+    }
+
+    _validatePasswordStrength(newPassword);
+
+    _registeredPassword = newPassword;
+  }
+
+  @override
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 250));
     _sessionUser = null;
+  }
+
+  /// Valida formato básico de correo.
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+  }
+
+  /// Valida fuerza mínima de contraseña.
+  ///
+  /// Regla simple para esta fase:
+  /// - mínimo 8 caracteres
+  /// - al menos una letra
+  /// - al menos un número
+  void _validatePasswordStrength(String password) {
+    final hasMinLength = password.length >= 8;
+    final hasLetter = RegExp(r'[A-Za-z]').hasMatch(password);
+    final hasNumber = RegExp(r'\d').hasMatch(password);
+
+    if (!hasMinLength || !hasLetter || !hasNumber) {
+      throw AuthException(
+        'La contraseña debe tener mínimo 8 caracteres, una letra y un número.',
+      );
+    }
   }
 }

@@ -99,6 +99,37 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Cambia la contraseña del usuario autenticado.
+///
+/// ¿Qué hace?
+/// Llama al repositorio de autenticación para validar la contraseña actual
+/// y guardar la nueva.
+///
+/// ¿Para qué sirve?
+/// Para permitir que Profile tenga una sección de seguridad real.
+Future<bool> changePassword({
+  required String currentPassword,
+  required String newPassword,
+}) async {
+  state = state.copyWith(isLoading: true, clearError: true);
+
+  try {
+    await _repository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+
+    state = state.copyWith(isLoading: false, clearError: true);
+    return true;
+  } catch (e) {
+    state = state.copyWith(
+      isLoading: false,
+      errorMessage: e.toString(),
+    );
+    return false;
+  }
+}
+
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
     await _repository.logout();

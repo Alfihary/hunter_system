@@ -1,18 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Controlador simple para alternar entre modo claro y oscuro.
-///
-/// En esta fase no persistimos el tema.
-/// Eso lo haremos después con almacenamiento local.
-class ThemeController extends Notifier<ThemeMode> {
-  @override
-  ThemeMode build() => ThemeMode.dark;
+import '../../app/theme/app_theme_preset.dart';
 
-  void toggleTheme() {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+/// Estado global de apariencia.
+///
+/// ¿Qué hace?
+/// Guarda:
+/// - modo claro/oscuro
+/// - preset visual RPG seleccionado
+///
+/// ¿Para qué sirve?
+/// Para controlar la identidad visual de toda la app desde Profile.
+class AppThemeState {
+  final ThemeMode mode;
+  final AppThemePreset preset;
+
+  const AppThemeState({
+    required this.mode,
+    required this.preset,
+  });
+
+  bool get isDarkMode => mode == ThemeMode.dark;
+
+  AppThemeState copyWith({
+    ThemeMode? mode,
+    AppThemePreset? preset,
+  }) {
+    return AppThemeState(
+      mode: mode ?? this.mode,
+      preset: preset ?? this.preset,
+    );
   }
 }
 
-final themeModeProvider =
-    NotifierProvider<ThemeController, ThemeMode>(ThemeController.new);
+/// Controlador global del tema visual.
+class ThemeController extends Notifier<AppThemeState> {
+  @override
+  AppThemeState build() {
+    return const AppThemeState(
+      mode: ThemeMode.dark,
+      preset: AppThemePreset.soloLeveling,
+    );
+  }
+
+  void toggleThemeMode() {
+    state = state.copyWith(
+      mode: state.mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
+    );
+  }
+
+  void setPreset(AppThemePreset preset) {
+    state = state.copyWith(preset: preset);
+  }
+}
+
+final themeProvider =
+    NotifierProvider<ThemeController, AppThemeState>(ThemeController.new);
+
+/// Compatibilidad temporal con código existente.
+final themeModeProvider = Provider<ThemeMode>((ref) {
+  return ref.watch(themeProvider).mode;
+});
