@@ -167,94 +167,94 @@ class _RoutineCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181827),
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Nombre
-          Text(routine.name, style: Theme.of(context).textTheme.titleMedium),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(routine.name, style: Theme.of(context).textTheme.titleMedium),
 
-          /// Descripción
-          if (routine.description != null && routine.description!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                routine.description!,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-
-          const SizedBox(height: 10),
-
-          /// Info
-          Row(
-            children: [
-              const Icon(Icons.list, size: 16),
-              const SizedBox(width: 6),
-              Text('${routine.exerciseCount} ejercicios'),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          /// Botones
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () {
-                    context.push('/workouts/session/${routine.id}');
-                  },
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Entrenar'),
+            if (routine.description != null && routine.description!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  routine.description!,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(width: 10),
-              IconButton(
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('Eliminar rutina'),
-                        content: Text('¿Eliminar "${routine.name}"?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancelar'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Eliminar'),
-                          ),
-                        ],
-                      );
+
+            const SizedBox(height: 10),
+
+            Row(
+              children: [
+                const Icon(Icons.list, size: 16),
+                const SizedBox(width: 6),
+                Text('${routine.exerciseCount} ejercicios'),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      context.push('/workouts/session/${routine.id}');
                     },
-                  );
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Entrenar'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                IconButton(
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Eliminar rutina'),
+                          content: Text('¿Eliminar "${routine.name}"?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Eliminar'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
 
-                  if (confirmed != true) return;
+                    if (confirmed != true) return;
 
-                  final error = await ref
-                      .read(workoutControllerProvider.notifier)
-                      .deleteRoutine(routine.id);
+                    final error = await ref
+                        .read(workoutControllerProvider.notifier)
+                        .deleteRoutine(routine.id);
 
-                  if (error != null && context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error)));
-                  }
-                },
-                icon: const Icon(Icons.delete_outline),
-              ),
-            ],
-          ),
-        ],
+                    if (error != null && context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error)));
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

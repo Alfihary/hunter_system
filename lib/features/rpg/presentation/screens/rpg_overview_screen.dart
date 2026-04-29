@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../features/stats/domain/rpg_stats_analysis.dart';
+import '../../../../features/stats/domain/weekly_training_volume.dart';
+import '../../../../features/stats/presentation/providers/training_stats_controller.dart';
+import '../../../../features/stats/presentation/widgets/rpg_stats_radar_chart.dart';
+import '../../../../features/stats/presentation/widgets/weekly_training_volume_chart.dart';
 import '../../../../shared/presentation/widgets/hunter_rank_badge.dart';
 import '../../../../shared/presentation/widgets/hunter_surface_card.dart';
 import '../../domain/rpg_overview.dart';
@@ -12,17 +17,17 @@ import '../providers/rpg_controller.dart';
 /// Pantalla STATS del cazador.
 ///
 /// ¿Qué hace?
-/// Muestra progreso real del usuario:
-/// - rango
-/// - nivel
-/// - XP
-/// - racha
-/// - desglose por módulo
-/// - stats RPG
+/// Muestra progreso real:
+/// - rango, nivel, XP y racha
+/// - volumen semanal de entrenamiento
+/// - análisis automático del volumen
+/// - radar RPG de atributos
+/// - análisis inteligente de atributos
+/// - fuentes de XP
+/// - atributos numéricos
 ///
 /// ¿Para qué sirve?
-/// Para reemplazar visualmente "RPG" por una pantalla más clara tipo
-/// estadísticas del cazador.
+/// Para que el usuario entienda su progreso como si fuera un panel RPG real.
 class RpgOverviewScreen extends ConsumerWidget {
   const RpgOverviewScreen({super.key});
 
@@ -30,6 +35,8 @@ class RpgOverviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final overviewAsync = ref.watch(rpgControllerProvider);
     final titlesAsync = ref.watch(rpgTitlesProvider);
+    final volumeAsync = ref.watch(weeklyTrainingVolumeProvider);
+    final volumeAnalysisAsync = ref.watch(weeklyTrainingVolumeAnalysisProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -62,6 +69,8 @@ class RpgOverviewScreen extends ConsumerWidget {
             onRefresh: () async {
               ref.invalidate(rpgTitlesProvider);
               ref.invalidate(rpgAchievementsProvider);
+              ref.invalidate(weeklyTrainingVolumeProvider);
+              ref.invalidate(weeklyTrainingVolumeAnalysisProvider);
               await ref.read(rpgControllerProvider.notifier).reload();
             },
             child: ListView(
@@ -81,6 +90,15 @@ class RpgOverviewScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _QuickStatsGrid(overview: overview),
                 const SizedBox(height: 14),
+                _TrainingVolumeCard(
+                  volumeAsync: volumeAsync,
+                  analysisAsync: volumeAnalysisAsync,
+                ),
+                const SizedBox(height: 14),
+                _RpgRadarCard(stats: overview.stats),
+                const SizedBox(height: 14),
+                _RpgStatsAnalysisCard(stats: overview.stats),
+                const SizedBox(height: 14),
                 _XpBreakdownCard(overview: overview),
                 const SizedBox(height: 14),
                 _StatsCard(stats: overview.stats),
@@ -94,13 +112,16 @@ class RpgOverviewScreen extends ConsumerWidget {
 
   RpgTitle? _findEquippedTitle(List<RpgTitle>? titles) {
     if (titles == null) return null;
+
     for (final title in titles) {
       if (title.isEquipped) return title;
     }
+
     return null;
   }
 }
 
+/// Card principal del rango actual.
 class _RankHeroCard extends StatelessWidget {
   final RpgOverview overview;
   final RpgTitle? title;
@@ -160,6 +181,7 @@ class _RankHeroCard extends StatelessWidget {
   }
 }
 
+/// Caja visual del rango.
 class _RankBox extends StatelessWidget {
   final String rank;
 
@@ -185,6 +207,7 @@ class _RankBox extends StatelessWidget {
   }
 }
 
+/// Métricas rápidas superiores.
 class _QuickStatsGrid extends StatelessWidget {
   final RpgOverview overview;
 
@@ -245,6 +268,183 @@ class _MiniStatCard extends StatelessWidget {
           Text(value, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 4),
           Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card de gráfica de volumen semanal.
+class _TrainingVolumeCard extends StatelessWidget {
+  final AsyncValue<List<WeeklyTrainingVolume>> volumeAsync;
+  final AsyncValue<WeeklyTrainingVolumeAnalysis> analysisAsync;
+
+  const _TrainingVolumeCard({
+    required this.volumeAsync,
+    required this.analysisAsync,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return HunterSurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VOLUMEN SEMANAL',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Reps × peso por semana',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          volumeAsync.when(
+            loading: () => const SizedBox(
+              height: 220,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, _) => SizedBox(
+              height: 180,
+              child: Center(
+                child: Text(error.toString(), textAlign: TextAlign.center),
+              ),
+            ),
+            data: (data) => WeeklyTrainingVolumeChart(data: data),
+          ),
+          const SizedBox(height: 14),
+          analysisAsync.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (error, _) => Text(
+              error.toString(),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            data: (analysis) => _VolumeAnalysisPanel(analysis: analysis),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Panel inteligente del análisis de volumen.
+class _VolumeAnalysisPanel extends StatelessWidget {
+  final WeeklyTrainingVolumeAnalysis analysis;
+
+  const _VolumeAnalysisPanel({required this.analysis});
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = switch (analysis.trend) {
+      WeeklyVolumeTrend.increased => Icons.trending_up,
+      WeeklyVolumeTrend.decreased => Icons.trending_down,
+      WeeklyVolumeTrend.maintained => Icons.trending_flat,
+      WeeklyVolumeTrend.firstData => Icons.flag_outlined,
+      WeeklyVolumeTrend.noData => Icons.info_outline,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.22),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  analysis.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  analysis.message,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card de radar RPG.
+class _RpgRadarCard extends StatelessWidget {
+  final RpgStats stats;
+
+  const _RpgRadarCard({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    return HunterSurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('RADAR RPG', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 6),
+          Text(
+            'Distribución visual de tus atributos',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          RpgStatsRadarChart(stats: stats),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card de análisis inteligente del radar RPG.
+class _RpgStatsAnalysisCard extends StatelessWidget {
+  final RpgStats stats;
+
+  const _RpgStatsAnalysisCard({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final analysis = RpgStatsAnalyzer.analyze(stats);
+
+    return HunterSurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ANÁLISIS RPG', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 6),
+          Text(
+            'Interpretación de tus atributos',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                analysis.isBalanced
+                    ? Icons.check_circle
+                    : Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  analysis.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(analysis.message, style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
     );

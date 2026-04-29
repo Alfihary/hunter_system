@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
 import '../../../home/presentation/providers/home_dashboard_controller.dart';
+import '../../../stats/presentation/providers/training_stats_controller.dart';
 import '../../../rpg/presentation/providers/rpg_controller.dart';
 import '../../data/drift_workout_repository.dart';
 import '../../domain/exercise_last_session_summary.dart';
@@ -156,6 +157,8 @@ class WorkoutController extends AsyncNotifier<List<WorkoutRoutineSummary>> {
     ref.invalidate(rpgControllerProvider);
     ref.invalidate(rpgAchievementsProvider);
     ref.invalidate(rpgTitlesProvider);
+    ref.invalidate(weeklyTrainingVolumeProvider);
+    ref.invalidate(weeklyTrainingVolumeAnalysisProvider);
   }
 }
 

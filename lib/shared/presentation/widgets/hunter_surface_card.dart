@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 /// Card visual premium del sistema Hunter.
 ///
 /// ¿Qué hace?
-/// Envuelve contenido dentro de una superficie más cuidada:
-/// - borde suave
-/// - sombra ligera
-/// - fondo con más presencia
+/// Envuelve contenido dentro de una superficie adaptable al tema:
+/// - dark mode: superficie oscura legible
+/// - light mode: superficie clara legible
+/// - highlighted: usa el color primario del preset
 ///
 /// ¿Para qué sirve?
-/// Para reutilizar una estética consistente en Home, Perfil y RPG.
+/// Para reutilizar una estética consistente sin romper contraste.
 class HunterSurfaceCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -25,15 +25,16 @@ class HunterSurfaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final backgroundColor = highlighted
-        ? colorScheme.primaryContainer.withOpacity(0.45)
-        : colorScheme.surfaceVariant.withOpacity(0.35);
+        ? scheme.primaryContainer.withOpacity(isDark ? 0.42 : 0.75)
+        : scheme.surface;
 
     final borderColor = highlighted
-        ? colorScheme.primary.withOpacity(0.35)
-        : colorScheme.outline.withOpacity(0.20);
+        ? scheme.primary.withOpacity(isDark ? 0.38 : 0.28)
+        : scheme.outline.withOpacity(isDark ? 0.20 : 0.14);
 
     return Container(
       decoration: BoxDecoration(
@@ -42,7 +43,7 @@ class HunterSurfaceCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDark ? 0.10 : 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

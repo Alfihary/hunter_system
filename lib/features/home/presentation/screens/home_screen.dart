@@ -47,7 +47,6 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
               children: [
                 _Header(name: user?.name ?? 'Cazador', overview: overview),
-
                 const SizedBox(height: 22),
 
                 HunterTappable(
@@ -65,7 +64,6 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 const HunterSectionLabel('ESTADÍSTICAS RÁPIDAS'),
-
                 const SizedBox(height: 12),
 
                 _QuickStats(overview: overview),
@@ -91,10 +89,7 @@ class _Header extends StatelessWidget {
   final String name;
   final HomeDashboardOverview overview;
 
-  const _Header({
-    required this.name,
-    required this.overview,
-  });
+  const _Header({required this.name, required this.overview});
 
   @override
   Widget build(BuildContext context) {
@@ -141,13 +136,15 @@ class _RankAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
       width: 74,
       height: 74,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.45)),
+        border: Border.all(color: scheme.outline.withOpacity(0.4)),
       ),
       child: Text(rank, style: Theme.of(context).textTheme.headlineLarge),
     );
@@ -161,19 +158,18 @@ class _XpPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF121827),
-        border: Border.all(color: const Color(0xFF55C8FF).withOpacity(0.25)),
+        color: scheme.surface,
+        border: Border.all(color: scheme.primary.withOpacity(0.25)),
       ),
       child: Text(
         '⚡ $xp XP',
-        style: const TextStyle(
-          color: Color(0xFFFFD93D),
-          fontWeight: FontWeight.w900,
-        ),
+        style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w900),
       ),
     );
   }
@@ -201,9 +197,7 @@ class _RankProgressCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          LinearProgressIndicator(
-            value: overview.rankProgress,
-          ),
+          LinearProgressIndicator(value: overview.rankProgress),
 
           const SizedBox(height: 12),
 
@@ -267,7 +261,9 @@ class _QuickStats extends StatelessWidget {
         Expanded(
           child: HunterTappable(
             onTap: () => context.push('/workouts'),
-            child: HunterPanel(child: Text('${overview.finishedWorkoutsToday}')),
+            child: HunterPanel(
+              child: Text('${overview.finishedWorkoutsToday}'),
+            ),
           ),
         ),
       ],
@@ -284,9 +280,7 @@ class _HabitsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return HunterPanel(
       child: Column(
-        children: overview.todayHabitItems
-            .map((e) => Text(e.title))
-            .toList(),
+        children: overview.todayHabitItems.map((e) => Text(e.title)).toList(),
       ),
     );
   }

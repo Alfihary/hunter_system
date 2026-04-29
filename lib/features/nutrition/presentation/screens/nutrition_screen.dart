@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/presentation/widgets/hunter_panel.dart';
+import '../../../../shared/presentation/widgets/hunter_section_label.dart';
 import '../../domain/meal_type.dart';
 import '../../domain/nutrition_day_overview.dart';
 import '../../domain/nutrition_log_entry.dart';
@@ -10,15 +12,18 @@ import '../providers/nutrition_controller.dart';
 /// Pantalla principal de nutrición.
 ///
 /// ¿Qué hace?
-/// - muestra resumen del día
-/// - muestra metas
-/// - lista los alimentos del día
-/// - permite cambiar de fecha
+/// - muestra resumen diario
+/// - muestra progreso de calorías y macros
+/// - permite cambiar fecha con límites
 /// - permite editar metas
-/// - permite crear registros manuales, buscar por API o escanear barcode
+/// - permite registrar manualmente con FAB
+/// - permite buscar alimento por API desde AppBar
+/// - permite escanear código de barras desde AppBar
+/// - lista alimentos agrupados por comida
 ///
 /// ¿Para qué sirve?
-/// Es el punto de entrada del módulo de nutrición.
+/// Para controlar alimentación diaria con estilo Hunter System,
+/// manteniendo compatibilidad con modo claro/oscuro.
 class NutritionScreen extends ConsumerWidget {
   const NutritionScreen({super.key});
 
@@ -29,7 +34,7 @@ class NutritionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nutrición'),
+        title: const Text('Dieta'),
         actions: [
           IconButton(
             tooltip: 'Escanear código',
@@ -65,35 +70,62 @@ class NutritionScreen extends ConsumerWidget {
           final sortedMealTypes = [...MealType.values]
             ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _DateSelector(
-                selectedDate: selectedDate,
-                onPrevious: () {
-                  ref
-                      .read(selectedNutritionDateProvider.notifier)
-                      .goToPreviousDay();
-                },
-                onToday: () {
-                  ref.read(selectedNutritionDateProvider.notifier).goToToday();
-                },
-                onNext: () {
-                  ref
-                      .read(selectedNutritionDateProvider.notifier)
-                      .goToNextDay();
-                },
-              ),
-              const SizedBox(height: 12),
-              _SummaryCard(overview: overview),
-              const SizedBox(height: 12),
-              ...sortedMealTypes.map<Widget>(
-                (mealType) => _MealSection(
-                  mealType: mealType,
-                  logs: overview.logsForMeal(mealType),
+          final today = DateTime.now();
+          final cleanToday = DateTime(today.year, today.month, today.day);
+          final cleanSelectedDate = DateTime(
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
+          );
+
+          final hasLogsOnSelectedDate = MealType.values.any(
+            (mealType) => overview.logsForMeal(mealType).isNotEmpty,
+          );
+
+          final canGoNext = cleanSelectedDate.isBefore(cleanToday);
+          final canGoPrevious = hasLogsOnSelectedDate;
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(nutritionControllerProvider.notifier).reload();
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _DateSelector(
+                  selectedDate: selectedDate,
+                  canGoPrevious: canGoPrevious,
+                  canGoNext: canGoNext,
+                  onPrevious: () {
+                    ref
+                        .read(selectedNutritionDateProvider.notifier)
+                        .goToPreviousDay();
+                  },
+                  onToday: () {
+                    ref
+                        .read(selectedNutritionDateProvider.notifier)
+                        .goToToday();
+                  },
+                  onNext: () {
+                    ref
+                        .read(selectedNutritionDateProvider.notifier)
+                        .goToNextDay();
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                _SummaryCard(overview: overview),
+                const SizedBox(height: 18),
+                const HunterSectionLabel('REGISTROS DEL DÍA'),
+                const SizedBox(height: 12),
+                ...sortedMealTypes.map(
+                  (mealType) => _MealSection(
+                    mealType: mealType,
+                    logs: overview.logsForMeal(mealType),
+                  ),
+                ),
+                const SizedBox(height: 80),
+              ],
+            ),
           );
         },
       ),
@@ -127,37 +159,13 @@ class NutritionScreen extends ConsumerWidget {
           content: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  controller: caloriesController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Calorías'),
-                ),
+                _GoalInput(controller: caloriesController, label: 'Calorías'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: proteinController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Proteína'),
-                ),
+                _GoalInput(controller: proteinController, label: 'Proteína'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: carbsController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Carbohidratos'),
-                ),
+                _GoalInput(controller: carbsController, label: 'Carbohidratos'),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: fatsController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Grasas'),
-                ),
+                _GoalInput(controller: fatsController, label: 'Grasas'),
               ],
             ),
           ),
@@ -221,14 +229,34 @@ class NutritionScreen extends ConsumerWidget {
   }
 }
 
+class _GoalInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+
+  const _GoalInput({required this.controller, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(labelText: label),
+    );
+  }
+}
+
 class _DateSelector extends StatelessWidget {
   final DateTime selectedDate;
+  final bool canGoPrevious;
+  final bool canGoNext;
   final VoidCallback onPrevious;
   final VoidCallback onToday;
   final VoidCallback onNext;
 
   const _DateSelector({
     required this.selectedDate,
+    required this.canGoPrevious,
+    required this.canGoNext,
     required this.onPrevious,
     required this.onToday,
     required this.onNext,
@@ -236,20 +264,34 @@ class _DateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(onPressed: onPrevious, icon: const Icon(Icons.chevron_left)),
-        Expanded(
-          child: Text(
-            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+    return HunterPanel(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: canGoPrevious ? onPrevious : null,
+            icon: const Icon(Icons.chevron_left),
           ),
-        ),
-        IconButton(onPressed: onNext, icon: const Icon(Icons.chevron_right)),
-        const SizedBox(width: 8),
-        OutlinedButton(onPressed: onToday, child: const Text('Hoy')),
-      ],
+          Expanded(
+            child: Column(
+              children: [
+                const HunterSectionLabel('DÍA SELECCIONADO'),
+                const SizedBox(height: 4),
+                Text(
+                  '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: canGoNext ? onNext : null,
+            icon: const Icon(Icons.chevron_right),
+          ),
+          OutlinedButton(onPressed: onToday, child: const Text('Hoy')),
+        ],
+      ),
     );
   }
 }
@@ -261,41 +303,52 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Text(
-              'Resumen del día',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            _MacroProgressRow(
-              label: 'Calorías',
-              current: overview.summary.totalCalories,
-              goal: overview.goal.calories,
-            ),
-            const SizedBox(height: 8),
-            _MacroProgressRow(
-              label: 'Proteína',
-              current: overview.summary.totalProtein,
-              goal: overview.goal.protein,
-            ),
-            const SizedBox(height: 8),
-            _MacroProgressRow(
-              label: 'Carbohidratos',
-              current: overview.summary.totalCarbs,
-              goal: overview.goal.carbs,
-            ),
-            const SizedBox(height: 8),
-            _MacroProgressRow(
-              label: 'Grasas',
-              current: overview.summary.totalFats,
-              goal: overview.goal.fats,
-            ),
-          ],
-        ),
+    final caloriesProgress = overview.goal.calories <= 0
+        ? 0.0
+        : (overview.summary.totalCalories / overview.goal.calories).clamp(
+            0.0,
+            1.0,
+          );
+
+    return HunterPanel(
+      highlighted: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HunterSectionLabel('RESUMEN DEL DÍA'),
+          const SizedBox(height: 8),
+          Text(
+            '${overview.summary.totalCalories.toStringAsFixed(0)} / ${overview.goal.calories.toStringAsFixed(0)} kcal',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: caloriesProgress,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          const SizedBox(height: 16),
+          _MacroProgressRow(
+            label: 'Proteína',
+            current: overview.summary.totalProtein,
+            goal: overview.goal.protein,
+            suffix: 'g',
+          ),
+          const SizedBox(height: 10),
+          _MacroProgressRow(
+            label: 'Carbohidratos',
+            current: overview.summary.totalCarbs,
+            goal: overview.goal.carbs,
+            suffix: 'g',
+          ),
+          const SizedBox(height: 10),
+          _MacroProgressRow(
+            label: 'Grasas',
+            current: overview.summary.totalFats,
+            goal: overview.goal.fats,
+            suffix: 'g',
+          ),
+        ],
       ),
     );
   }
@@ -305,11 +358,13 @@ class _MacroProgressRow extends StatelessWidget {
   final String label;
   final double current;
   final double goal;
+  final String suffix;
 
   const _MacroProgressRow({
     required this.label,
     required this.current,
     required this.goal,
+    this.suffix = '',
   });
 
   @override
@@ -319,10 +374,16 @@ class _MacroProgressRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$label: ${current.toStringAsFixed(1)} / ${goal.toStringAsFixed(1)}',
+        Row(
+          children: [
+            Expanded(child: Text(label)),
+            Text(
+              '${current.toStringAsFixed(1)} / ${goal.toStringAsFixed(1)}$suffix',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 5),
         LinearProgressIndicator(
           value: progress,
           minHeight: 8,
@@ -341,9 +402,9 @@ class _MealSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: HunterPanel(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,33 +415,54 @@ class _MealSection extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             if (logs.isEmpty)
-              const Text('Sin registros.')
+              Text(
+                'Sin registros.',
+                style: Theme.of(context).textTheme.bodySmall,
+              )
             else
               ...logs.map(
-                (log) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(log.foodName),
-                  subtitle: Text(
-                    '${log.calories.toStringAsFixed(0)} kcal • P ${log.protein.toStringAsFixed(1)} • C ${log.carbs.toStringAsFixed(1)} • G ${log.fats.toStringAsFixed(1)}',
-                  ),
-                  trailing: IconButton(
-                    onPressed: () async {
-                      final error = await ref
-                          .read(nutritionControllerProvider.notifier)
-                          .deleteLog(log.id);
+                (log) => _FoodLogTile(
+                  log: log,
+                  onDelete: () async {
+                    final error = await ref
+                        .read(nutritionControllerProvider.notifier)
+                        .deleteLog(log.id);
 
-                      if (error != null && context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(error)));
-                      }
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                  ),
+                    if (error != null && context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error)));
+                    }
+                  },
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FoodLogTile extends StatelessWidget {
+  final NutritionLogEntry log;
+  final Future<void> Function() onDelete;
+
+  const _FoodLogTile({required this.log, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(log.foodName),
+      subtitle: Text(
+        '${log.calories.toStringAsFixed(0)} kcal • '
+        'P ${log.protein.toStringAsFixed(1)} • '
+        'C ${log.carbs.toStringAsFixed(1)} • '
+        'G ${log.fats.toStringAsFixed(1)}',
+      ),
+      trailing: IconButton(
+        onPressed: onDelete,
+        icon: const Icon(Icons.delete_outline),
       ),
     );
   }
