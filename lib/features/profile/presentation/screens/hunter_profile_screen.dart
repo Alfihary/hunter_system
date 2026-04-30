@@ -157,7 +157,7 @@ class _ThemeSection extends StatelessWidget {
           const SizedBox(height: 8),
 
           DropdownButtonFormField<AppThemePreset>(
-            value: themeState.preset,
+            initialValue: themeState.preset,
             items: AppThemePreset.values.map((preset) {
               return DropdownMenuItem(value: preset, child: Text(preset.label));
             }).toList(),

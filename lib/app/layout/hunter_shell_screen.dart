@@ -107,7 +107,9 @@ class _HunterBottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF101018),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
       ),
       child: SafeArea(
         top: false,

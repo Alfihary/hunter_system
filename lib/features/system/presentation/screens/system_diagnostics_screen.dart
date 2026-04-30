@@ -347,7 +347,7 @@ class _CheckCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                   ),
                   child: Text(
                     check.severity.label,

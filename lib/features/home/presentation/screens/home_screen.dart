@@ -144,7 +144,7 @@ class _RankAvatar extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.outline.withOpacity(0.4)),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.4)),
       ),
       child: Text(rank, style: Theme.of(context).textTheme.headlineLarge),
     );
@@ -165,7 +165,7 @@ class _XpPill extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: scheme.surface,
-        border: Border.all(color: scheme.primary.withOpacity(0.25)),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.25)),
       ),
       child: Text(
         '⚡ $xp XP',

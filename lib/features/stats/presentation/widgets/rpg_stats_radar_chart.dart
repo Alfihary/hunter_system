@@ -55,7 +55,7 @@ class RpgStatsRadarChart extends StatelessWidget {
           },
           dataSets: [
             RadarDataSet(
-              fillColor: primary.withOpacity(0.22),
+              fillColor: primary.withValues(alpha: 0.22),
               borderColor: primary,
               entryRadius: 4,
               borderWidth: 3,

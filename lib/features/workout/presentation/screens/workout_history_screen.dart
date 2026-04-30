@@ -172,7 +172,7 @@ class _HistoryCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 color: const Color(0xFF121827),
                 border: Border.all(
-                  color: const Color(0xFF55C8FF).withOpacity(0.20),
+                  color: const Color(0xFF55C8FF).withValues(alpha: 0.20),
                 ),
               ),
               child: const Icon(Icons.fitness_center, color: Color(0xFF55C8FF)),
@@ -347,8 +347,8 @@ class _Panel extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: highlighted
-              ? const Color(0xFF55C8FF).withOpacity(0.20)
-              : Colors.white.withOpacity(0.08),
+              ? const Color(0xFF55C8FF).withValues(alpha: 0.20)
+              : Colors.white.withValues(alpha: 0.08),
         ),
       ),
       child: child,

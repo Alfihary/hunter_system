@@ -29,12 +29,12 @@ class HunterSurfaceCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final backgroundColor = highlighted
-        ? scheme.primaryContainer.withOpacity(isDark ? 0.42 : 0.75)
+        ? scheme.primaryContainer.withValues(alpha: isDark ? 0.42 : 0.75)
         : scheme.surface;
 
     final borderColor = highlighted
-        ? scheme.primary.withOpacity(isDark ? 0.38 : 0.28)
-        : scheme.outline.withOpacity(isDark ? 0.20 : 0.14);
+        ? scheme.primary.withValues(alpha: isDark ? 0.38 : 0.28)
+        : scheme.outline.withValues(alpha: isDark ? 0.20 : 0.14);
 
     return Container(
       decoration: BoxDecoration(
@@ -43,7 +43,7 @@ class HunterSurfaceCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.10 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.10 : 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

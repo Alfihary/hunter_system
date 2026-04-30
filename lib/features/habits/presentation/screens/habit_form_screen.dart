@@ -17,10 +17,7 @@ import '../providers/habits_controller.dart';
 class HabitFormScreen extends ConsumerStatefulWidget {
   final HabitSummary? initialHabit;
 
-  const HabitFormScreen({
-    super.key,
-    this.initialHabit,
-  });
+  const HabitFormScreen({super.key, this.initialHabit});
 
   @override
   ConsumerState<HabitFormScreen> createState() => _HabitFormScreenState();
@@ -49,8 +46,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       text: (widget.initialHabit?.xpReward ?? 10).toString(),
     );
 
-    _selectedCategory =
-        widget.initialHabit?.category ?? HabitCategory.physical;
+    _selectedCategory = widget.initialHabit?.category ?? HabitCategory.physical;
   }
 
   @override
@@ -75,14 +71,18 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     String? error;
 
     if (_isEditing) {
-      error = await ref.read(habitsControllerProvider.notifier).updateHabit(
+      error = await ref
+          .read(habitsControllerProvider.notifier)
+          .updateHabit(
             id: widget.initialHabit!.id,
             name: name,
             category: _selectedCategory,
             xpReward: xpReward,
           );
     } else {
-      error = await ref.read(habitsControllerProvider.notifier).createHabit(
+      error = await ref
+          .read(habitsControllerProvider.notifier)
+          .createHabit(
             name: name,
             category: _selectedCategory,
             xpReward: xpReward,
@@ -96,9 +96,9 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     });
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -138,10 +138,8 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<HabitCategory>(
-                    value: _selectedCategory,
-                    decoration: const InputDecoration(
-                      labelText: 'Categoría',
-                    ),
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Categoría'),
                     items: HabitCategory.values.map((category) {
                       return DropdownMenuItem(
                         value: category,
@@ -191,7 +189,9 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.save_outlined),
-                      label: Text(_isEditing ? 'Guardar cambios' : 'Crear hábito'),
+                      label: Text(
+                        _isEditing ? 'Guardar cambios' : 'Crear hábito',
+                      ),
                     ),
                   ),
                 ],

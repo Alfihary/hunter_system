@@ -28,8 +28,8 @@ class HunterRankBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: color.withOpacity(0.15),
-        border: Border.all(color: color.withOpacity(0.35)),
+        color: color.withValues(alpha: 0.15),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         'Rango $rankLabel',
@@ -38,7 +38,6 @@ class HunterRankBadge extends StatelessWidget {
     );
   }
 
-  /// Obtiene el color visual del rango.
   Color _colorForRank(String rank) {
     switch (rank.toUpperCase()) {
       case 'E':

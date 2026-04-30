@@ -177,7 +177,7 @@ class _NutritionLogFormScreenState
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<MealType>(
-                    value: _selectedMealType,
+                    initialValue: _selectedMealType,
                     decoration: const InputDecoration(
                       labelText: 'Tipo de comida',
                     ),

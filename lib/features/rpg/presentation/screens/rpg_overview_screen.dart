@@ -195,7 +195,7 @@ class _RankBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.35)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
       ),
       child: Text(
         rank,
@@ -348,9 +348,9 @@ class _VolumeAnalysisPanel extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.22),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.22),
         ),
       ),
       child: Row(

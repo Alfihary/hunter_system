@@ -5,25 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/presentation/widgets/hunter_panel.dart';
 import '../../../../shared/presentation/widgets/hunter_section_label.dart';
 import '../../domain/meal_type.dart';
+import '../../domain/nutrition_day_analysis.dart';
 import '../../domain/nutrition_day_overview.dart';
 import '../../domain/nutrition_log_entry.dart';
 import '../providers/nutrition_controller.dart';
 
 /// Pantalla principal de nutrición.
-///
-/// ¿Qué hace?
-/// - muestra resumen diario
-/// - muestra progreso de calorías y macros
-/// - permite cambiar fecha con límites
-/// - permite editar metas
-/// - permite registrar manualmente con FAB
-/// - permite buscar alimento por API desde AppBar
-/// - permite escanear código de barras desde AppBar
-/// - lista alimentos agrupados por comida
-///
-/// ¿Para qué sirve?
-/// Para controlar alimentación diaria con estilo Hunter System,
-/// manteniendo compatibilidad con modo claro/oscuro.
 class NutritionScreen extends ConsumerWidget {
   const NutritionScreen({super.key});
 
@@ -114,6 +101,8 @@ class NutritionScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 14),
                 _SummaryCard(overview: overview),
+                const SizedBox(height: 14),
+                _NutritionAnalysisCard(overview: overview),
                 const SizedBox(height: 18),
                 const HunterSectionLabel('REGISTROS DEL DÍA'),
                 const SizedBox(height: 12),
@@ -183,9 +172,7 @@ class NutritionScreen extends ConsumerWidget {
       },
     );
 
-    final shouldSave = result == true;
-
-    if (!shouldSave) {
+    if (result != true) {
       caloriesController.dispose();
       proteinController.dispose();
       carbsController.dispose();
@@ -311,7 +298,7 @@ class _SummaryCard extends StatelessWidget {
           );
 
     return HunterPanel(
-      highlighted: true,
+      highlighted: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -347,6 +334,55 @@ class _SummaryCard extends StatelessWidget {
             current: overview.summary.totalFats,
             goal: overview.goal.fats,
             suffix: 'g',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NutritionAnalysisCard extends StatelessWidget {
+  final NutritionDayOverview overview;
+
+  const _NutritionAnalysisCard({required this.overview});
+
+  @override
+  Widget build(BuildContext context) {
+    final analysis = NutritionDayAnalyzer.analyze(overview);
+    final scheme = Theme.of(context).colorScheme;
+
+    final icon = switch (analysis.level) {
+      NutritionAnalysisLevel.good => Icons.check_circle_outline,
+      NutritionAnalysisLevel.warning => Icons.warning_amber_rounded,
+      NutritionAnalysisLevel.danger => Icons.local_fire_department_outlined,
+    };
+
+    final color = switch (analysis.level) {
+      NutritionAnalysisLevel.good => scheme.primary,
+      NutritionAnalysisLevel.warning => scheme.tertiary,
+      NutritionAnalysisLevel.danger => scheme.error,
+    };
+
+    return HunterPanel(
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  analysis.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  analysis.message,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
         ],
       ),

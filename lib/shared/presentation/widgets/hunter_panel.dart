@@ -30,12 +30,12 @@ class HunterPanel extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final backgroundColor = highlighted
-        ? scheme.primaryContainer.withOpacity(isDark ? 0.38 : 0.70)
+        ? scheme.primaryContainer.withValues(alpha: isDark ? 0.38 : 0.70)
         : scheme.surface;
 
     final borderColor = highlighted
-        ? scheme.primary.withOpacity(isDark ? 0.35 : 0.25)
-        : scheme.outline.withOpacity(isDark ? 0.18 : 0.14);
+        ? scheme.primary.withValues(alpha: isDark ? 0.35 : 0.25)
+        : scheme.outline.withValues(alpha: isDark ? 0.18 : 0.14);
 
     return Container(
       padding: padding,
@@ -45,7 +45,7 @@ class HunterPanel extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.08 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.08 : 0.05),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

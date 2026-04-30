@@ -286,7 +286,7 @@ class _ExerciseDraftCardState extends State<_ExerciseDraftCard> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<MuscleGroup>(
-              value: widget.draft.muscleGroup,
+              initialValue: widget.draft.muscleGroup,
               decoration: const InputDecoration(labelText: 'Grupo muscular'),
               items: MuscleGroup.values.map((group) {
                 return DropdownMenuItem(value: group, child: Text(group.label));
