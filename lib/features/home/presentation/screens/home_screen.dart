@@ -2,17 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/presentation/widgets/hunter_panel.dart';
+import '../../../../shared/presentation/widgets/hunter_section_label.dart';
+import '../../../../shared/presentation/widgets/hunter_tappable.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../health/presentation/providers/health_controller.dart';
 import '../../../quests/presentation/providers/daily_mission_controller.dart';
 import '../../../rpg/presentation/providers/rpg_controller.dart';
-import '../../../../shared/presentation/widgets/hunter_panel.dart';
-import '../../../../shared/presentation/widgets/hunter_section_label.dart';
-import '../../../../shared/presentation/widgets/hunter_tappable.dart';
-
 import '../../domain/home_dashboard_overview.dart';
 import '../providers/home_dashboard_controller.dart';
 
+/// Pantalla principal de Hunter System.
+///
+/// ¿Qué hace?
+/// Muestra el resumen diario del usuario:
+/// - bienvenida personalizada
+/// - rango y XP
+/// - misión del día
+/// - estadísticas rápidas
+/// - hábitos pendientes
+///
+/// ¿Para qué sirve?
+/// Es el dashboard inicial de la app y conecta al usuario
+/// con los módulos principales.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -46,7 +58,11 @@ class HomeScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
               children: [
-                _Header(name: user?.name ?? 'Cazador', overview: overview),
+                _Header(
+                  name: user?.name ?? 'Hunter',
+                  welcomeTitle: user?.welcomeTitle ?? 'Bienvenido/a, Hunter',
+                  overview: overview,
+                ),
                 const SizedBox(height: 22),
 
                 HunterTappable(
@@ -83,13 +99,28 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// ================= HEADER =================
-
+/// Header superior del Home.
+///
+/// ¿Qué hace?
+/// Muestra:
+/// - avatar/rango
+/// - bienvenida personalizada por género
+/// - nombre del usuario
+/// - título equipado
+/// - XP total
+///
+/// ¿Para qué sirve?
+/// Para que el usuario vea identidad RPG desde el primer momento.
 class _Header extends StatelessWidget {
   final String name;
+  final String welcomeTitle;
   final HomeDashboardOverview overview;
 
-  const _Header({required this.name, required this.overview});
+  const _Header({
+    required this.name,
+    required this.welcomeTitle,
+    required this.overview,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -102,14 +133,12 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const HunterSectionLabel('BIENVENIDO, CAZADOR'),
+              HunterSectionLabel(welcomeTitle.toUpperCase()),
               const SizedBox(height: 6),
-
               Text(
                 name.toUpperCase(),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-
               if (overview.hasEquippedTitle) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -129,6 +158,7 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// Avatar visual del rango actual.
 class _RankAvatar extends StatelessWidget {
   final String rank;
 
@@ -151,6 +181,7 @@ class _RankAvatar extends StatelessWidget {
   }
 }
 
+/// Chip visual de XP total.
 class _XpPill extends StatelessWidget {
   final int xp;
 
@@ -175,8 +206,10 @@ class _XpPill extends StatelessWidget {
   }
 }
 
-/// ================= CARDS =================
-
+/// Card de progreso de rango.
+///
+/// ¿Qué hace?
+/// Muestra progreso hacia el siguiente rango RPG.
 class _RankProgressCard extends StatelessWidget {
   final HomeDashboardOverview overview;
 
@@ -196,11 +229,8 @@ class _RankProgressCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-
           LinearProgressIndicator(value: overview.rankProgress),
-
           const SizedBox(height: 12),
-
           Text(
             overview.nextRankLabel == null
                 ? 'Rango máximo'
@@ -212,6 +242,7 @@ class _RankProgressCard extends StatelessWidget {
   }
 }
 
+/// Card de misión diaria.
 class _MissionCard extends StatelessWidget {
   final HomeDashboardOverview overview;
 
@@ -225,7 +256,6 @@ class _MissionCard extends StatelessWidget {
         children: [
           const HunterSectionLabel('MISIÓN DE HOY'),
           const SizedBox(height: 12),
-
           ...overview.todayMissionItems.map(
             (item) => Row(
               children: [
@@ -242,6 +272,12 @@ class _MissionCard extends StatelessWidget {
   }
 }
 
+/// Estadísticas rápidas del día.
+///
+/// ¿Qué hace?
+/// Muestra acceso rápido a:
+/// - racha actual
+/// - entrenamientos terminados hoy
 class _QuickStats extends StatelessWidget {
   final HomeDashboardOverview overview;
 
@@ -271,6 +307,7 @@ class _QuickStats extends StatelessWidget {
   }
 }
 
+/// Card resumida de hábitos del día.
 class _HabitsCard extends StatelessWidget {
   final HomeDashboardOverview overview;
 
@@ -280,12 +317,29 @@ class _HabitsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return HunterPanel(
       child: Column(
-        children: overview.todayHabitItems.map((e) => Text(e.title)).toList(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HunterSectionLabel('HÁBITOS DE HOY'),
+          const SizedBox(height: 12),
+          if (overview.todayHabitItems.isEmpty)
+            Text(
+              'No hay hábitos pendientes.',
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
+            ...overview.todayHabitItems.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(item.title),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
+/// Devuelve ícono según clave de misión.
 IconData _iconFor(String key) {
   switch (key) {
     case 'training':

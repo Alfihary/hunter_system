@@ -3,18 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/local_auth_repository.dart';
 import '../../domain/app_user.dart';
 import '../../domain/auth_repository.dart';
+import '../../domain/user_gender.dart';
 
-/// Estado de autenticación de la app.
 class AuthState {
   final AppUser? user;
   final bool isLoading;
   final String? errorMessage;
 
-  const AuthState({
-    this.user,
-    this.isLoading = false,
-    this.errorMessage,
-  });
+  const AuthState({this.user, this.isLoading = false, this.errorMessage});
 
   bool get isAuthenticated => user != null;
 
@@ -36,10 +32,6 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return LocalAuthRepository();
 });
 
-/// Controlador principal de autenticación.
-///
-/// Usa un repositorio abstracto.
-/// La lógica de login/register/logout vive aquí, no en la UI.
 class AuthController extends Notifier<AuthState> {
   late final AuthRepository _repository;
 
@@ -49,17 +41,11 @@ class AuthController extends Notifier<AuthState> {
     return AuthState(user: _repository.currentUser);
   }
 
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final user = await _repository.login(
-        email: email,
-        password: password,
-      );
+      final user = await _repository.login(email: email, password: password);
 
       state = AuthState(user: user, isLoading: false);
       return true;
@@ -77,6 +63,7 @@ class AuthController extends Notifier<AuthState> {
     required String name,
     required String email,
     required String password,
+    required UserGender gender,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
@@ -85,6 +72,7 @@ class AuthController extends Notifier<AuthState> {
         name: name,
         email: email,
         password: password,
+        gender: gender,
       );
 
       state = AuthState(user: user, isLoading: false);
@@ -99,36 +87,25 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Cambia la contraseña del usuario autenticado.
-///
-/// ¿Qué hace?
-/// Llama al repositorio de autenticación para validar la contraseña actual
-/// y guardar la nueva.
-///
-/// ¿Para qué sirve?
-/// Para permitir que Profile tenga una sección de seguridad real.
-Future<bool> changePassword({
-  required String currentPassword,
-  required String newPassword,
-}) async {
-  state = state.copyWith(isLoading: true, clearError: true);
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
 
-  try {
-    await _repository.changePassword(
-      currentPassword: currentPassword,
-      newPassword: newPassword,
-    );
+    try {
+      await _repository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
 
-    state = state.copyWith(isLoading: false, clearError: true);
-    return true;
-  } catch (e) {
-    state = state.copyWith(
-      isLoading: false,
-      errorMessage: e.toString(),
-    );
-    return false;
+      state = state.copyWith(isLoading: false, clearError: true);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      return false;
+    }
   }
-}
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -141,5 +118,6 @@ Future<bool> changePassword({
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

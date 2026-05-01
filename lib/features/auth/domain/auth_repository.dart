@@ -1,3 +1,5 @@
+import 'package:hunter_system/features/auth/domain/user_gender.dart';
+
 import 'app_user.dart';
 
 /// Contrato de autenticación.
@@ -11,15 +13,13 @@ import 'app_user.dart';
 abstract class AuthRepository {
   AppUser? get currentUser;
 
-  Future<AppUser> login({
-    required String email,
-    required String password,
-  });
+  Future<AppUser> login({required String email, required String password});
 
   Future<AppUser> register({
     required String name,
     required String email,
     required String password,
+    required UserGender gender,
   });
 
   /// Cambia la contraseña del usuario autenticado.

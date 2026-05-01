@@ -280,7 +280,9 @@ class _SecuritySection extends ConsumerWidget {
                     newPassword: next.text,
                   );
 
-              if (context.mounted) Navigator.pop(context);
+              if (!context.mounted) return;
+
+              Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

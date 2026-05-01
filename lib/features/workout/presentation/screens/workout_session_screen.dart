@@ -166,6 +166,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
         await HapticFeedback.mediumImpact();
 
+        if (!mounted) return;
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Descanso terminado.')));
@@ -202,6 +204,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         });
 
         await HapticFeedback.mediumImpact();
+
+        if (!mounted) return;
 
         ScaffoldMessenger.of(
           context,

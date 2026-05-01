@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_controller.dart';
+import '../../domain/user_gender.dart';
 
 /// Pantalla de registro local falso.
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -17,6 +18,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  UserGender _selectedGender = UserGender.unspecified;
 
   @override
   void dispose() {
@@ -31,10 +33,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(authControllerProvider.notifier).register(
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .register(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          gender: _selectedGender,
         );
 
     if (!mounted) return;
@@ -44,9 +49,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (success) {
       context.go('/home');
     } else if (state.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.errorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
     }
   }
 
@@ -75,9 +80,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: 24),
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Nombre'),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Ingresa tu nombre';
@@ -89,12 +92,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
+                      DropdownButtonFormField<UserGender>(
+                        initialValue: _selectedGender,
+                        decoration: const InputDecoration(labelText: 'Género'),
+                        items: UserGender.values.map((gender) {
+                          return DropdownMenuItem(
+                            value: gender,
+                            child: Text(gender.label),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedGender = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Correo',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Correo'),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Ingresa tu correo';
@@ -131,7 +149,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Text('Registrarme'),
                         ),

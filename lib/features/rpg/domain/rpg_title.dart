@@ -1,10 +1,11 @@
-/// Título desbloqueable del personaje.
+/// Título desbloqueable del sistema RPG.
 ///
 /// ¿Qué hace?
-/// Representa un título que el usuario puede desbloquear y equipar.
+/// Representa una identidad que el usuario puede desbloquear y equipar.
 ///
 /// ¿Para qué sirve?
-/// Para darle identidad visual y temática al personaje.
+/// Para reforzar la sensación de progreso tipo RPG sin depender del género
+/// del usuario. Por eso los títulos deben ser neutros.
 class RpgTitle {
   final String id;
   final String name;
@@ -23,4 +24,14 @@ class RpgTitle {
     required this.isEquipped,
     required this.sortOrder,
   });
+
+  /// Indica si el título se puede equipar.
+  bool get canEquip => isUnlocked && !isEquipped;
+
+  /// Texto visual de estado.
+  String get statusLabel {
+    if (isEquipped) return 'Equipado';
+    if (isUnlocked) return 'Desbloqueado';
+    return 'Bloqueado';
+  }
 }

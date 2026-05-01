@@ -62,18 +62,24 @@ class SystemDiagnosticsScreen extends ConsumerWidget {
                     final result = await ref
                         .read(systemRepairControllerProvider.notifier)
                         .ensureBaseConfiguration();
+
+                    if (!context.mounted) return;
+
                     _showRepairFeedback(context, result);
                   },
                   onSeedRecommendedHabits: () async {
                     final result = await ref
                         .read(systemRepairControllerProvider.notifier)
                         .seedRecommendedHabits();
+                    if (!context.mounted) return;
                     _showRepairFeedback(context, result);
                   },
                   onSyncHealthNow: () async {
                     final result = await ref
                         .read(systemRepairControllerProvider.notifier)
                         .syncHealthNow();
+                    if (!context.mounted) return;
+
                     _showRepairFeedback(context, result);
                   },
                 ),

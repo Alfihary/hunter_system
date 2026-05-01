@@ -11,6 +11,8 @@ import '../domain/rpg_repository.dart';
 import '../domain/rpg_source_breakdown.dart';
 import '../domain/rpg_stats.dart';
 import '../domain/rpg_title.dart';
+import '../domain/rpg_text_catalog.dart';
+import '../domain/rpg_text_key.dart';
 
 /// Repositorio RPG derivado desde hábitos, entrenamiento, nutrición,
 /// health y quests persistentes.
@@ -110,7 +112,7 @@ class DerivedRpgRepository implements RpgRepository {
       ),
       _achievement(
         id: 'constant_hunter',
-        name: 'Cazador Constante',
+        name: RpgTextCatalog.get(RpgTextKey.achievementConstantIron),
         description: 'Completa 20 entrenamientos.',
         rarity: AchievementRarity.rare,
         current: metrics.finishedWorkouts,
@@ -185,7 +187,7 @@ class DerivedRpgRepository implements RpgRepository {
       /// Health
       _achievement(
         id: 'first_step',
-        name: 'Primer Paso del Cazador',
+        name: RpgTextCatalog.get(RpgTextKey.achievementFirstStep),
         description: 'Registra tu primer día con pasos sincronizados.',
         rarity: AchievementRarity.common,
         current: metrics.healthRecordedDays,
@@ -193,7 +195,7 @@ class DerivedRpgRepository implements RpgRepository {
       ),
       _achievement(
         id: 'hunter_stride',
-        name: 'Zancada del Cazador',
+        name: RpgTextCatalog.get(RpgTextKey.achievementAscendingStride),
         description: 'Cumple la meta de pasos 3 días.',
         rarity: AchievementRarity.rare,
         current: metrics.stepGoalDays,
@@ -325,7 +327,7 @@ class DerivedRpgRepository implements RpgRepository {
       ),
       _title(
         id: 'threshold_hunter',
-        name: 'Cazador de Umbral',
+        name: RpgTextCatalog.get(RpgTextKey.titleThresholdBearer),
         description: 'Ya no eres un humano común. Has cruzado el umbral.',
         requirementText: 'Alcanza rango D',
         unlocked: metrics.rank.index >= RpgRank.d.index,
@@ -349,7 +351,7 @@ class DerivedRpgRepository implements RpgRepository {
       ),
       _title(
         id: 'lord_of_the_hunt',
-        name: 'Señor de la Cacería',
+        name: RpgTextCatalog.get(RpgTextKey.titleSovereigntyOfHunt),
         description: 'Tu avance ya no parece humano; parece depredador.',
         requirementText: 'Alcanza rango A',
         unlocked: metrics.rank.index >= RpgRank.a.index,

@@ -13,11 +13,10 @@ import '../../domain/rpg_title.dart';
 /// Provider del repositorio RPG.
 ///
 /// ¿Qué hace?
-/// Inyecta la implementación derivada desde la base local
-/// y la integra con Health.
+/// Inyecta la implementación derivada desde Drift y Health.
 ///
 /// ¿Para qué sirve?
-/// Para desacoplar la UI del cálculo real del sistema RPG.
+/// Para que la UI no dependa directamente de la base de datos.
 final rpgRepositoryProvider = Provider<RpgRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final healthRepository = ref.watch(healthRepositoryProvider);
@@ -35,6 +34,7 @@ class RpgController extends AsyncNotifier<RpgOverview> {
     return _repository.getOverview();
   }
 
+  /// Recarga el overview RPG.
   Future<void> reload() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_repository.getOverview);
@@ -58,6 +58,12 @@ final rpgTitlesProvider = FutureProvider<List<RpgTitle>>((ref) {
 });
 
 /// Controlador de acciones RPG.
+///
+/// ¿Qué hace?
+/// Ejecuta acciones como equipar títulos.
+///
+/// ¿Para qué sirve?
+/// Para mantener mutaciones separadas de la UI.
 class RpgActionController extends AsyncNotifier<void> {
   late final RpgRepository _repository;
 
@@ -66,7 +72,12 @@ class RpgActionController extends AsyncNotifier<void> {
     _repository = ref.watch(rpgRepositoryProvider);
   }
 
-  /// Equipa un título desbloqueado y refresca el estado relacionado.
+  /// Equipa un título desbloqueado.
+  ///
+  /// Edge cases:
+  /// - El título no existe.
+  /// - El título está bloqueado.
+  /// - Falla la persistencia local.
   Future<String?> equipTitle(String titleId) async {
     state = const AsyncLoading();
 
@@ -75,6 +86,7 @@ class RpgActionController extends AsyncNotifier<void> {
 
       ref.invalidate(rpgTitlesProvider);
       ref.invalidate(rpgAchievementsProvider);
+
       await ref.read(rpgControllerProvider.notifier).reload();
 
       state = const AsyncData(null);

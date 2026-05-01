@@ -3,27 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/exceptions/auth_exception.dart';
 import '../domain/app_user.dart';
 import '../domain/auth_repository.dart';
+import '../domain/user_gender.dart';
 
-/// Repositorio local de autenticación persistente.
-///
-/// ¿Qué hace?
-/// Permite:
-/// - registrar una cuenta local
-/// - iniciar sesión después de cerrar la app
-/// - cerrar sesión
-/// - cambiar contraseña
-///
-/// ¿Para qué sirve?
-/// Para que la app funcione sin backend durante esta fase,
-/// pero sin perder la cuenta al reiniciar la aplicación.
-///
-/// Nota de seguridad:
-/// Esta implementación es educativa. Guarda contraseña local en texto plano.
-/// En producción se debe usar backend, hashing seguro y almacenamiento protegido.
 class LocalAuthRepository implements AuthRepository {
   static const String _userIdKey = 'auth_user_id';
   static const String _userNameKey = 'auth_user_name';
   static const String _userEmailKey = 'auth_user_email';
+  static const String _userGenderKey = 'auth_user_gender';
   static const String _userPasswordKey = 'auth_user_password';
   static const String _sessionActiveKey = 'auth_session_active';
 
@@ -34,12 +20,12 @@ class LocalAuthRepository implements AuthRepository {
   @override
   AppUser? get currentUser => _sessionUser;
 
-  /// Registra una cuenta local y la guarda en el dispositivo.
   @override
   Future<AppUser> register({
     required String name,
     required String email,
     required String password,
+    required UserGender gender,
   }) async {
     await Future.delayed(const Duration(milliseconds: 400));
 
@@ -67,6 +53,7 @@ class LocalAuthRepository implements AuthRepository {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: cleanName,
       email: cleanEmail,
+      gender: gender,
     );
 
     _registeredUser = user;
@@ -78,7 +65,6 @@ class LocalAuthRepository implements AuthRepository {
     return user;
   }
 
-  /// Inicia sesión usando la cuenta guardada localmente.
   @override
   Future<AppUser> login({
     required String email,
@@ -109,7 +95,6 @@ class LocalAuthRepository implements AuthRepository {
     return _sessionUser!;
   }
 
-  /// Cambia la contraseña de la cuenta local.
   @override
   Future<void> changePassword({
     required String currentPassword,
@@ -146,7 +131,6 @@ class LocalAuthRepository implements AuthRepository {
     );
   }
 
-  /// Cierra la sesión actual sin borrar la cuenta registrada.
   @override
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 250));
@@ -157,13 +141,13 @@ class LocalAuthRepository implements AuthRepository {
     await prefs.setBool(_sessionActiveKey, false);
   }
 
-  /// Carga la cuenta guardada en SharedPreferences.
   Future<void> _loadStoredAccount() async {
     final prefs = await SharedPreferences.getInstance();
 
     final id = prefs.getString(_userIdKey);
     final name = prefs.getString(_userNameKey);
     final email = prefs.getString(_userEmailKey);
+    final genderValue = prefs.getString(_userGenderKey);
     final password = prefs.getString(_userPasswordKey);
     final sessionActive = prefs.getBool(_sessionActiveKey) ?? false;
 
@@ -174,14 +158,18 @@ class LocalAuthRepository implements AuthRepository {
       return;
     }
 
-    final user = AppUser(id: id, name: name, email: email);
+    final user = AppUser(
+      id: id,
+      name: name,
+      email: email,
+      gender: UserGender.fromStorage(genderValue),
+    );
 
     _registeredUser = user;
     _registeredPassword = password;
     _sessionUser = sessionActive ? user : null;
   }
 
-  /// Guarda la cuenta localmente.
   Future<void> _saveAccount({
     required AppUser user,
     required String password,
@@ -192,16 +180,15 @@ class LocalAuthRepository implements AuthRepository {
     await prefs.setString(_userIdKey, user.id);
     await prefs.setString(_userNameKey, user.name);
     await prefs.setString(_userEmailKey, user.email);
+    await prefs.setString(_userGenderKey, user.gender.storageValue);
     await prefs.setString(_userPasswordKey, password);
     await prefs.setBool(_sessionActiveKey, sessionActive);
   }
 
-  /// Valida formato básico de correo.
   bool _isValidEmail(String email) {
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
   }
 
-  /// Valida fuerza mínima de contraseña.
   void _validatePasswordStrength(String password) {
     final hasMinLength = password.length >= 8;
     final hasLetter = RegExp(r'[A-Za-z]').hasMatch(password);
